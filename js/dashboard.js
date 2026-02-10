@@ -51,17 +51,36 @@ async function carregar() {
   cards.innerHTML = '';
 
   data.forEach(r => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <strong>${r.fornecedor}</strong>
-      <span>NF: ${r.nf}</span>
-      <span>Valor: R$ ${r.valor}</span>
-      <span>Status: ${r.acatada ? 'Acatada' : 'Pendente'}</span>
-      ${role === 'admin' ? `<button onclick="toggleAcatada('${r.id}', ${r.acatada})">Acatada</button>` : ''}
-    `;
-    cards.appendChild(card);
+  const tr = document.createElement('tr');
+
+  const valorFormatado = Number(r.valor).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
   });
+
+  tr.innerHTML = `
+    <td data-label="Data">${new Date(r.data).toLocaleDateString('pt-BR')}</td>
+    <td data-label="Fornecedor">${r.fornecedor}</td>
+    <td data-label="NF">${r.nf}</td>
+    <td data-label="Valor">${valorFormatado}</td>
+    <td data-label="Status">
+      <span class="status ${r.acatada ? 'ok' : 'pendente'}">
+        ${r.acatada ? 'Acatada' : 'Não Acatada'}
+      </span>
+    </td>
+    <td data-label="Ação">
+      ${role === 'admin'
+        ? `<button class="btn-small"
+            onclick="toggleAcatada('${r.id}', ${r.acatada})">
+            Alterar
+          </button>`
+        : '-'}
+    </td>
+  `;
+
+  cards.appendChild(tr);
+});
+
 }
 
 async function toggleAcatada(id, atual) {
@@ -69,6 +88,7 @@ async function toggleAcatada(id, atual) {
     .from('recebimentos')
     .update({ acatada: !atual })
     .eq('id', id);
+
   carregar();
 }
 
