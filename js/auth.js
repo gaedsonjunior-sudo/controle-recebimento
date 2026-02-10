@@ -1,4 +1,6 @@
-async function login() {
+async function login(event) {
+  event.preventDefault();
+
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const errorEl = document.getElementById('error');
@@ -16,7 +18,6 @@ async function login() {
     return;
   }
 
-  // busca o perfil do usuário
   const { data: profile, error: profileError } =
     await window.supabaseClient
       .from('profiles')
@@ -29,10 +30,8 @@ async function login() {
     return;
   }
 
-  // redirecionamento automático
-  if (profile.role === 'admin') {
-    window.location.href = 'admin.html';
-  } else {
-    window.location.href = 'dashboard.html';
-  }
+  window.location.href =
+    profile.role === 'admin'
+      ? 'admin.html'
+      : 'dashboard.html';
 }
