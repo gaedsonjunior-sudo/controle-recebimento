@@ -11,6 +11,39 @@ function abrirModal() {
 function fecharModal() {
   document.getElementById('modal').style.display = 'none';
 }
+async function salvar() {
+  const data = document.getElementById('data').value;
+  const fornecedor = document.getElementById('fornecedor').value;
+  const nf = document.getElementById('nf').value;
+  const valor = document.getElementById('valor').value;
+  const hora_chegada = document.getElementById('hora_chegada').value;
+  const temperatura = document.getElementById('temperatura').value || null;
+
+  if (!data || !fornecedor || !nf || !valor || !hora_chegada) {
+    alert('Preencha todos os campos obrigatórios.');
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from('recebimentos')
+    .insert([{
+      data,
+      fornecedor,
+      nf,
+      valor,
+      hora_chegada,
+      temperatura,
+      acatada: false
+    }]);
+
+  if (error) {
+    alert('Erro ao salvar: ' + error.message);
+    return;
+  }
+
+  fecharModal();
+  carregar();
+}
 
 async function carregar() {
   const { data } = await supabaseClient.from('recebimentos').select('*');
