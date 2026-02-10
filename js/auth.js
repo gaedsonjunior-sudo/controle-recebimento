@@ -18,14 +18,14 @@ async function login(event) {
     return;
   }
 
-  const { data: profile, error: profileError } =
+  const { data: profile } =
     await window.supabaseClient
       .from('profiles')
       .select('role')
       .eq('id', data.user.id)
       .single();
 
-  if (profileError || !profile) {
+  if (!profile) {
     errorEl.innerText = 'Perfil do usuário não encontrado.';
     return;
   }

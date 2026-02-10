@@ -1,65 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Recebimentos</title>
-<link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recebimentos</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <h2>Recebimentos</h2>
+  <div id="cards"></div>
 
-<header>
-<h2>Recebimentos</h2>
-<button onclick="abrirModal()">+ Novo</button>
-</header>
-
-<section class="accordion">
-<button class="accordion-header" onclick="toggleFiltro()">Filtros</button>
-<div class="accordion-body" id="filtros">
-<input id="fNF" placeholder="NF">
-<input id="fFornecedor" placeholder="Fornecedor">
-<select id="fAcatada">
-<option value="">Todas</option>
-<option value="true">Acatadas</option>
-<option value="false">Não Acatadas</option>
-</select>
-<button onclick="carregar()">Aplicar filtros</button>
-</div>
-</section>
-
-<main id="cards"></main>
-
-<!-- MODAL NOVO -->
-<div class="modal" id="modal">
-<div class="modal-content">
-<h3>Novo Recebimento</h3>
-<input type="date" id="data">
-<input placeholder="Fornecedor" id="fornecedor">
-<input placeholder="NF" id="nf">
-<input type="number" placeholder="Valor" id="valor">
-<input type="time" id="hora_chegada">
-<input type="number" placeholder="Temperatura (opcional)" id="temperatura">
-<div class="actions">
-<button onclick="salvar()">Salvar</button>
-<button class="cancel" onclick="fecharModal()">Cancelar</button>
-</div>
-</div>
-</div>
-
-<!-- MODAL SAIDA -->
-<div class="modal" id="modalSaida">
-<div class="modal-content">
-<h3>Finalizar Recebimento</h3>
-<input type="time" id="hora_saida">
-<input placeholder="Liberado por" id="liberacao">
-<div class="actions">
-<button onclick="salvarSaida()">Salvar</button>
-<button class="cancel" onclick="fecharSaida()">Cancelar</button>
-</div>
-</div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/supabase.js"></script>
-<script src="js/dashboard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
 </html>
