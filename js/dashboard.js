@@ -46,42 +46,69 @@ async function salvar() {
 }
 
 async function carregar() {
-  const { data } = await supabaseClient.from('recebimentos').select('*');
+  const nf = document.getElementById('filtro_nf')?.value;
+  const fornecedor = document.getElementById('filtro_fornecedor')?.value;
+  const status = document.getElementById('filtro_status')?.value;
+
+  let query = supabaseClient
+    .from('recebimentos')
+    .select('*')
+    .order('data', { ascending: false });
+
+  if (nf) {
+    query = query.ilike('nf', `%${nf}%`);
+  }
+
+  if (fornecedor) {
+    query = query.ilike('fornecedor', `%${fornecedor}%`);
+  }
+
+  if (status !== '') {
+    query = query.eq('acatada', status === 'true');
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
   const cards = document.getElementById('cards');
   cards.innerHTML = '';
 
   data.forEach(r => {
-  const tr = document.createElement('tr');
+    const tr = document.createElement('tr');
 
-  const valorFormatado = Number(r.valor).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
+    const valorFormatado = Number(r.valor).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+
+    tr.innerHTML = `
+      <td data-label="Data">${new Date(r.data).toLocaleDateString('pt-BR')}</td>
+      <td data-label="Fornecedor">${r.fornecedor}</td>
+      <td data-label="NF">${r.nf}</td>
+      <td data-label="Valor">${valorFormatado}</td>
+      <td data-label="Status">
+        <span class="status ${r.acatada ? 'ok' : 'pendente'}">
+          ${r.acatada ? 'Acatada' : 'Não Acatada'}
+        </span>
+      </td>
+      <td data-label="Ação">
+        ${role === 'admin'
+          ? `<button class="btn-status"
+              onclick="toggleAcatada('${r.id}', ${r.acatada})">
+              Alterar
+            </button>`
+          : '-'}
+      </td>
+    `;
+
+    cards.appendChild(tr);
   });
-
-  tr.innerHTML = `
-    <td data-label="Data">${new Date(r.data).toLocaleDateString('pt-BR')}</td>
-    <td data-label="Fornecedor">${r.fornecedor}</td>
-    <td data-label="NF">${r.nf}</td>
-    <td data-label="Valor">${valorFormatado}</td>
-    <td data-label="Status">
-      <span class="status ${r.acatada ? 'ok' : 'pendente'}">
-        ${r.acatada ? 'Acatada' : 'Não Acatada'}
-      </span>
-    </td>
-    <td data-label="Ação">
-      ${role === 'admin'
-        ? `<button class="btn-small"
-            onclick="toggleAcatada('${r.id}', ${r.acatada})">
-            Alterar
-          </button>`
-        : '-'}
-    </td>
-  `;
-
-  cards.appendChild(tr);
-});
-
 }
+
 
 async function toggleAcatada(id, atual) {
   await supabaseClient
