@@ -6,13 +6,15 @@
   <title>Login</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-  <form onsubmit="login(event)">
-  <input id="email" type="email" placeholder="Email" required>
-  <input id="password" type="password" placeholder="Senha" required>
-  <button type="submit">Entrar</button>
-  <span id="error"></span>
-</form>
+<body class="center">
+  <form class="login-card" onsubmit="login(event)">
+    <h1>Controle de Recebimento</h1>
+    <p>Acesso ao sistema</p>
+    <input id="email" type="email" placeholder="Email" required>
+    <input id="password" type="password" placeholder="Senha" required>
+    <button type="submit">Entrar</button>
+    <span id="error"></span>
+  </form>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/supabase.js"></script>

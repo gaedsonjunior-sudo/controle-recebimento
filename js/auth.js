@@ -1,10 +1,9 @@
 async function login(event) {
-  if (event) event.preventDefault();
+  event.preventDefault();
 
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const errorEl = document.getElementById('error');
-
   errorEl.innerText = '';
 
   const { data, error } =
@@ -26,12 +25,10 @@ async function login(event) {
       .single();
 
   if (!profile) {
-    errorEl.innerText = 'Perfil do usuário não encontrado.';
+    errorEl.innerText = 'Perfil não encontrado';
     return;
   }
 
-  window.location.href =
-    profile.role === 'admin'
-      ? 'admin.html'
-      : 'dashboard.html';
+  localStorage.setItem('role', profile.role);
+  window.location.href = 'dashboard.html';
 }

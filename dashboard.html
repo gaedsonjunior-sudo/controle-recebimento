@@ -7,11 +7,46 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h2>Recebimentos</h2>
-  <div id="cards"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/dashboard.js"></script>
+<header class="top">
+  <h2>Recebimentos</h2>
+  <button onclick="abrirModal()">+ Novo</button>
+</header>
+
+<section class="filters">
+  <button class="accordion-btn" onclick="toggleFiltros()">Filtros</button>
+  <div class="accordion-body" id="filtros">
+    <input id="fNF" placeholder="NF">
+    <input id="fFornecedor" placeholder="Fornecedor">
+    <select id="fAcatada">
+      <option value="">Todas</option>
+      <option value="true">Acatadas</option>
+      <option value="false">Não Acatadas</option>
+    </select>
+    <button onclick="carregar()">Aplicar</button>
+  </div>
+</section>
+
+<main id="cards" class="cards"></main>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Novo Recebimento</h3>
+    <input type="date" id="data">
+    <input id="fornecedor" placeholder="Fornecedor">
+    <input id="nf" placeholder="NF">
+    <input type="number" id="valor" placeholder="Valor">
+    <input type="time" id="hora_chegada">
+    <input type="number" id="temperatura" placeholder="Temperatura (opcional)">
+    <div class="actions">
+      <button onclick="salvar()">Salvar</button>
+      <button class="cancel" onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/dashboard.js"></script>
 </body>
 </html>

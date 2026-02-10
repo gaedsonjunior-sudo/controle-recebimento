@@ -1,57 +1,103 @@
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, Arial, sans-serif;
+  font-family: Inter, Arial, sans-serif;
   background: #f4f6f8;
   color: #333;
 }
 
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
 .login-card {
-  max-width: 380px;
   width: 100%;
-  margin: 80px auto;
-  padding: 24px;
+  max-width: 380px;
   background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0,0,0,.08);
-}
-
-.login-card h1 {
-  margin: 0 0 4px;
-}
-
-.login-card p {
-  margin: 0 0 20px;
-  color: #666;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
 }
 
 input, select, button {
   width: 100%;
-  max-width: 100%;
-  padding: 12px;
   margin-top: 12px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 10px;
   border: 1px solid #ddd;
-  font-size: 15px;
 }
 
 button {
   background: #2563eb;
   color: #fff;
   border: none;
-  cursor: pointer;
 }
 
-button:hover {
-  background: #1e4ed8;
+.top {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
 }
 
-#error {
-  display: block;
+.filters {
+  padding: 0 16px;
+}
+
+.accordion-btn {
+  background: #e5e7eb;
+  color: #111;
+}
+
+.accordion-body {
+  display: none;
   margin-top: 12px;
-  color: #dc2626;
-  font-size: 14px;
+}
+
+.accordion-body.open {
+  display: block;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 420px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.cancel {
+  background: #9ca3af;
 }
