@@ -1,4 +1,4 @@
 const supabase = supabase.createClient(
-'SUA_PROJECT_URL',
-'SUA_ANON_KEY'
+'https://goxfwzqftyqagpblzowd.supabase.co',
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdveGZ3enFmdHlxYWdwYmx6b3dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzE4MTQsImV4cCI6MjA4NjMwNzgxNH0.-X1E2IqizXDtRIs7N0sAery9Ni1TS19DeWEEfBSXgNc'
 );
