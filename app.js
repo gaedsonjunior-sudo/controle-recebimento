@@ -23,9 +23,32 @@ const totalNotas = document.getElementById('totalNotas');
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
+    // Verificar se o Supabase foi inicializado
+    if (!supabase || !supabase.auth) {
+        console.error('❌ Supabase não inicializado. Verifique o arquivo config.js');
+        showConfigError();
+        return;
+    }
+    
     checkAuth();
     setupEventListeners();
 });
+
+// Mostrar erro de configuração
+function showConfigError() {
+    if (loginError) {
+        loginError.innerHTML = `
+            <strong>⚠️ Erro de Configuração</strong><br>
+            As credenciais do Supabase não foram configuradas.<br>
+            <small>Edite o arquivo <code>config.js</code> no GitHub com suas credenciais do Supabase.</small>
+        `;
+        loginError.classList.add('show');
+        loginError.style.background = '#fee2e2';
+        loginError.style.border = '2px solid #ef4444';
+        loginError.style.padding = '16px';
+        loginError.style.borderRadius = '8px';
+    }
+}
 
 // Verificar autenticação
 async function checkAuth() {

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Configuração - Notas Fiscais</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+        
+        .status.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 2px solid #f59e0b;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .check-item:last-child {
+            border-bottom: none;
+        }
+        
+        .icon {
+            font-size: 24px;
+        }
+        
+        .check-label {
+            flex: 1;
+            color: #374151;
+        }
+        
+        .check-value {
+            color: #6b7280;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #0066ff;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #0052cc;
+            transform: translateY(-2px);
+        }
+        
+        .instructions {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        
+        .instructions code {
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Verificação de Configuração</h1>
+        <p class="subtitle">Sistema de Controle de Notas Fiscais</p>
+        
+        <div id="mainStatus" class="status">
+            <div style="font-size: 20px; margin-bottom: 8px;">⏳ Verificando...</div>
+            Aguarde enquanto verificamos a configuração
+        </div>
+        
+        <div id="checks">
+            <div class="check-item">
+                <span class="icon" id="icon1">⏳</span>
+                <span class="check-label">Supabase SDK carregado</span>
+                <span class="check-value" id="status1">-</span>
+            </div>
+            
+            <div class="check-item">
+                <span class="icon" id="icon2">⏳</span>
+                <span class="check-label">URL do Supabase configurada</span>
+                <span class="check-value" id="status2">-</span>
+            </div>
+            
+            <div class="check-item">
+                <span class="icon" id="icon3">⏳</span>
+                <span class="check-label">Chave Anon configurada</span>
+                <span class="check-value" id="status3">-</span>
+            </div>
+            
+            <div class="check-item">
+                <span class="icon" id="icon4">⏳</span>
+                <span class="check-label">Cliente Supabase inicializado</span>
+                <span class="check-value" id="status4">-</span>
+            </div>
+            
+            <div class="check-item">
+                <span class="icon" id="icon5">⏳</span>
+                <span class="check-label">Conexão com banco de dados</span>
+                <span class="check-value" id="status5">-</span>
+            </div>
+        </div>
+        
+        <div id="instructions"></div>
+        
+        <div style="text-align: center;">
+            <a href="index.html" class="btn" id="mainBtn" style="display: none;">Ir para o Sistema</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script>
+        async function verificarConfiguracao() {
+            let allOk = true;
+            
+            // 1. Verificar SDK
+            if (typeof window.supabase !== 'undefined') {
+                setStatus(1, true, 'Carregado');
+            } else {
+                setStatus(1, false, 'Não encontrado');
+                allOk = false;
+            }
+            
+            // 2. Verificar URL
+            if (SUPABASE_URL && SUPABASE_URL !== 'SUA_URL_DO_SUPABASE') {
+                setStatus(2, true, SUPABASE_URL.substring(0, 30) + '...');
+            } else {
+                setStatus(2, false, 'Não configurada');
+                allOk = false;
+            }
+            
+            // 3. Verificar Chave
+            if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'SUA_CHAVE_ANON_DO_SUPABASE') {
+                setStatus(3, true, SUPABASE_ANON_KEY.substring(0, 20) + '...');
+            } else {
+                setStatus(3, false, 'Não configurada');
+                allOk = false;
+            }
+            
+            // 4. Verificar inicialização
+            if (supabase && supabase.auth) {
+                setStatus(4, true, 'Inicializado');
+            } else {
+                setStatus(4, false, 'Falha na inicialização');
+                allOk = false;
+            }
+            
+            // 5. Testar conexão
+            if (supabase && supabase.auth) {
+                try {
+                    const { data, error } = await supabase.from('usuarios').select('count');
+                    if (!error) {
+                        setStatus(5, true, 'Conectado');
+                    } else {
+                        setStatus(5, false, error.message);
+                        allOk = false;
+                    }
+                } catch (e) {
+                    setStatus(5, false, 'Erro: ' + e.message);
+                    allOk = false;
+                }
+            } else {
+                setStatus(5, false, 'Cliente não inicializado');
+                allOk = false;
+            }
+            
+            // Resultado final
+            const mainStatus = document.getElementById('mainStatus');
+            const instructions = document.getElementById('instructions');
+            const mainBtn = document.getElementById('mainBtn');
+            
+            if (allOk) {
+                mainStatus.className = 'status success';
+                mainStatus.innerHTML = `
+                    <div style="font-size: 24px; margin-bottom: 8px;">✅ Configuração OK!</div>
+                    Tudo está configurado corretamente. Você pode usar o sistema.
+                `;
+                mainBtn.style.display = 'inline-block';
+            } else {
+                mainStatus.className = 'status error';
+                mainStatus.innerHTML = `
+                    <div style="font-size: 24px; margin-bottom: 8px;">❌ Configuração Pendente</div>
+                    Alguns itens precisam ser corrigidos. Veja as instruções abaixo.
+                `;
+                
+                instructions.innerHTML = `
+                    <h3>📋 Como Corrigir:</h3>
+                    <ol>
+                        <li>No GitHub, abra o arquivo <code>config.js</code></li>
+                        <li>Clique no ícone de lápis ✏️ para editar</li>
+                        <li>Substitua as linhas:
+                            <br><code>const SUPABASE_URL = 'SUA_URL_DO_SUPABASE';</code>
+                            <br><code>const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_DO_SUPABASE';</code>
+                        </li>
+                        <li>Cole suas credenciais do Supabase (encontre em: <br>Supabase Dashboard → Settings → API)</li>
+                        <li>Clique em "Commit changes"</li>
+                        <li>Aguarde 1 minuto e recarregue esta página</li>
+                    </ol>
+                `;
+            }
+        }
+        
+        function setStatus(num, success, message) {
+            const icon = document.getElementById('icon' + num);
+            const status = document.getElementById('status' + num);
+            
+            icon.textContent = success ? '✅' : '❌';
+            status.textContent = message;
+            status.style.color = success ? '#059669' : '#dc2626';
+        }
+        
+        // Executar verificação
+        setTimeout(verificarConfiguracao, 500);
+    </script>
+</body>
+</html>
