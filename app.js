@@ -81,7 +81,24 @@ async function loadUserData(user) {
 // Event Listeners
 function setupEventListeners() {
     // Login
-    loginForm.addEventListener('submit', handleLogin);
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault()
+
+      const email = document.getElementById('username').value
+      const password = document.getElementById('password').value
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      })
+
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      console.log('Logado com sucesso!', data)
+    })
     
     // Logout
     logoutBtn.addEventListener('click', handleLogout);
