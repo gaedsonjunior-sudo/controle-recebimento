@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Notas Fiscais - Recebimento</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-icon">📦</div>
+                <h1>Controle de Notas Fiscais</h1>
+                <p>Sistema de Gerenciamento de Recebimento</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tela Principal -->
+    <div id="mainScreen" class="screen">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="app-logo">📦</div>
+                    <div class="app-title">
+                        <h1>Notas Fiscais</h1>
+                        <p>Gerenciamento de Recebimento</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span class="user-name" id="currentUserName"></span>
+                        <span class="user-role" id="currentUserRole"></span>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-secondary btn-icon">Sair</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="controls-section">
+                <div class="filters-container">
+                    <h3>Filtros</h3>
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="filterFornecedor">Fornecedor</label>
+                            <input type="text" id="filterFornecedor" placeholder="Buscar fornecedor...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterNF">Número da NF</label>
+                            <input type="text" id="filterNF" placeholder="Buscar nº...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterFiscal">Fiscal</label>
+                            <input type="text" id="filterFiscal" placeholder="Buscar fiscal...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterData">Data</label>
+                            <input type="date" id="filterData">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterStatus">Status</label>
+                            <select id="filterStatus">
+                                <option value="">Todos</option>
+                                <option value="Não Acatada">Não Acatada</option>
+                                <option value="Acatada">Acatada</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="clearFiltersBtn" class="btn btn-secondary">Limpar Filtros</button>
+                        </div>
+                    </div>
+                </div>
+                <button id="newNFBtn" class="btn btn-primary btn-large">
+                    <span class="btn-icon">+</span>
+                    Nova Nota Fiscal
+                </button>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Notas Fiscais Cadastradas</h2>
+                    <div class="table-info">
+                        <span id="totalNotas">0 notas</span>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="notasTable" class="notas-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Fornecedor</th>
+                                <th>NF</th>
+                                <th>Valor</th>
+                                <th>Hora Chegada</th>
+                                <th>Temperatura</th>
+                                <th>Hora Saída</th>
+                                <th>Fiscal</th>
+                                <th>Status</th>
+                                <th class="actions-column">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="notasTableBody">
+                            <!-- Dados serão inseridos via JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="emptyState" class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <p>Nenhuma nota fiscal cadastrada</p>
+                        <button class="btn btn-primary" onclick="document.getElementById('newNFBtn').click()">Cadastrar primeira nota</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Nova/Editar Nota Fiscal -->
+    <div id="nfModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nova Nota Fiscal</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <form id="nfForm" class="nf-form">
+                <input type="hidden" id="nfId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nfData">Data *</label>
+                        <input type="date" id="nfData" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nfHoraChegada">Hora de Chegada *</label>
+                        <input type="time" id="nfHoraChegada" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nfFornecedor">Fornecedor *</label>
+                        <input type="text" id="nfFornecedor" required placeholder="Nome do fornecedor">
+                    </div>
+                    <div class="form-group">
+                        <label for="nfNumero">Número da NF *</label>
+                        <input type="text" id="nfNumero" required placeholder="000.000.000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nfValor">Valor *</label>
+                        <input type="text" id="nfValor" required placeholder="R$ 0,00">
+                    </div>
+                    <div class="form-group">
+                        <label for="nfTemperatura">Temperatura (°C)</label>
+                        <input type="text" id="nfTemperatura" placeholder="Ex: 5°C">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nfHoraSaida">Hora de Saída</label>
+                        <input type="time" id="nfHoraSaida">
+                    </div>
+                    <div class="form-group" id="statusGroup" style="display: none;">
+                        <label for="nfStatus">Status</label>
+                        <select id="nfStatus">
+                            <option value="Não Acatada">Não Acatada</option>
+                            <option value="Acatada">Acatada</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Confirmação -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2>Confirmar Exclusão</h2>
+                <button class="modal-close" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir esta nota fiscal?</p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
