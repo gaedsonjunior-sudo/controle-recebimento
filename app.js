@@ -24,8 +24,8 @@ const totalNotas = document.getElementById('totalNotas');
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar se o Supabase foi inicializado
-    if (!supabase || !supabase.auth) {
-        console.error('❌ Supabase não inicializado. Verifique o arquivo config.js');
+    if (!supabase) {
+        console.error('❌ Supabase não inicializado');
         showConfigError();
         return;
     }
@@ -38,9 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function showConfigError() {
     if (loginError) {
         loginError.innerHTML = `
-            <strong>⚠️ Erro de Configuração</strong><br>
-            As credenciais do Supabase não foram configuradas.<br>
-            <small>Edite o arquivo <code>config.js</code> no GitHub com suas credenciais do Supabase.</small>
+            <strong>⚠️ Erro ao Conectar com Supabase</strong><br>
+            Verifique se as credenciais estão corretas no arquivo <code>config.js</code><br>
+            <small>Abra o Console (F12) para mais detalhes do erro.</small>
         `;
         loginError.classList.add('show');
         loginError.style.background = '#fee2e2';
