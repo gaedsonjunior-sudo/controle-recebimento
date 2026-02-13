@@ -403,6 +403,34 @@ body {
     white-space: nowrap;
 }
 
+.notas-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition);
+    position: relative;
+}
+
+.notas-table th.sortable:hover {
+    background: var(--bg-tertiary);
+    color: var(--primary-color);
+}
+
+.notas-table th.sortable.sort-asc .sort-icon::after {
+    content: ' ▲';
+    color: var(--primary-color);
+}
+
+.notas-table th.sortable.sort-desc .sort-icon::after {
+    content: ' ▼';
+    color: var(--primary-color);
+}
+
+.sort-icon {
+    font-size: 10px;
+    opacity: 0.5;
+    margin-left: 4px;
+}
+
 .notas-table td {
     padding: 16px;
     border-bottom: 1px solid var(--border-color);

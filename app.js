@@ -5,6 +5,10 @@ let notasFiscais = [];
 let editingNFId = null;
 let deleteNFId = null;
 
+// Controle de ordenação
+let currentSortColumn = 'data';
+let currentSortDirection = 'desc'; // desc = mais recente primeiro
+
 // Variável para o cliente Supabase (será preenchida após carregamento)
 let supabaseClient = null;
 
@@ -130,6 +134,14 @@ function setupEventListeners() {
     confirmModal.addEventListener('click', (e) => {
         if (e.target === confirmModal) closeConfirmModal();
     });
+    
+    // Ordenação por colunas
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.dataset.column;
+            handleSort(column);
+        });
+    });
 }
 
 // Login
@@ -230,9 +242,7 @@ function showMainScreen() {
 async function loadNotasFiscais() {
     const { data, error } = await supabaseClient
         .from('notas_fiscais')
-        .select('*')
-        .order('data', { ascending: false })
-        .order('hora_chegada', { ascending: false });
+        .select('*');
     
     if (error) {
         console.error('Erro ao carregar notas:', error);
@@ -240,7 +250,17 @@ async function loadNotasFiscais() {
     }
     
     notasFiscais = data || [];
-    renderNotasFiscais(notasFiscais);
+    
+    // Aplicar ordenação padrão (data desc)
+    const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
+    renderNotasFiscais(sorted);
+    
+    // Atualizar indicador visual
+    const defaultHeader = document.querySelector(`[data-column="${currentSortColumn}"]`);
+    if (defaultHeader) {
+        defaultHeader.classList.add(`sort-${currentSortDirection}`);
+    }
+}
 }
 
 // Renderizar Notas Fiscais
@@ -347,6 +367,60 @@ function closeConfirmModal() {
     deleteNFId = null;
 }
 
+// Ordenação
+function handleSort(column) {
+    // Se clicar na mesma coluna, inverte a direção
+    if (currentSortColumn === column) {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        // Nova coluna, começa com ascendente
+        currentSortColumn = column;
+        currentSortDirection = 'asc';
+    }
+    
+    // Atualizar indicadores visuais
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.classList.remove('sort-asc', 'sort-desc');
+    });
+    
+    const activeHeader = document.querySelector(`[data-column="${column}"]`);
+    activeHeader.classList.add(`sort-${currentSortDirection}`);
+    
+    // Ordenar e renderizar
+    const sorted = sortNotas([...notasFiscais], column, currentSortDirection);
+    renderNotasFiscais(sorted);
+}
+
+function sortNotas(notas, column, direction) {
+    return notas.sort((a, b) => {
+        let valueA = a[column];
+        let valueB = b[column];
+        
+        // Tratar valores nulos
+        if (valueA === null || valueA === undefined) return 1;
+        if (valueB === null || valueB === undefined) return -1;
+        
+        // Comparação por tipo
+        let comparison = 0;
+        
+        if (column === 'valor' || column === 'numero_nf') {
+            // Números
+            comparison = parseFloat(valueA) - parseFloat(valueB);
+        } else if (column === 'data') {
+            // Datas
+            comparison = new Date(valueA) - new Date(valueB);
+        } else if (column === 'hora_chegada' || column === 'hora_saida') {
+            // Horas
+            comparison = (valueA || '00:00').localeCompare(valueB || '00:00');
+        } else {
+            // Texto
+            comparison = String(valueA).localeCompare(String(valueB), 'pt-BR', { sensitivity: 'base' });
+        }
+        
+        return direction === 'asc' ? comparison : -comparison;
+    });
+}
+
 // Confirmar delete
 function confirmDelete(id) {
     deleteNFId = id;
@@ -436,7 +510,9 @@ function applyFilters() {
         return matchFornecedor && matchNF && matchFiscal && matchData && matchStatus;
     });
     
-    renderNotasFiscais(filtered);
+    // Aplicar ordenação atual
+    const sorted = sortNotas([...filtered], currentSortColumn, currentSortDirection);
+    renderNotasFiscais(sorted);
 }
 
 function clearFilters() {
@@ -445,7 +521,10 @@ function clearFilters() {
     document.getElementById('filterFiscal').value = '';
     document.getElementById('filterData').value = '';
     document.getElementById('filterStatus').value = '';
-    renderNotasFiscais(notasFiscais);
+    
+    // Aplicar ordenação atual
+    const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
+    renderNotasFiscais(sorted);
 }
 
 // Formatação
