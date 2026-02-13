@@ -558,7 +558,10 @@ function formatNF(e) {
 
 function formatNFNumber(value) {
     if (!value) return '';
-    return value.toString().replace(/(\d{3})(?=\d)/g, '$1.');
+    // Converter para string e remover pontos existentes
+    let numStr = value.toString().replace(/\./g, '');
+    // Formatar da direita para esquerda
+    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 function formatDate(dateString) {
