@@ -5,8 +5,8 @@ let notasFiscais = [];
 let editingNFId = null;
 let deleteNFId = null;
 
-// Cliente Supabase
-let supabase = null;
+// Variável para o cliente Supabase (será preenchida após carregamento)
+let supabaseClient = null;
 
 // Elementos do DOM
 const loginScreen = document.getElementById('loginScreen');
@@ -29,10 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Aguardar config.js carregar
     setTimeout(() => {
         // Pegar cliente do window
-        supabase = window.supabaseClient;
+        supabaseClient = window.supabaseClient;
         
         // Verificar se o Supabase foi inicializado
-        if (!supabase) {
+        if (!supabaseClient) {
             console.error('❌ Supabase não inicializado');
             showConfigError();
             return;
@@ -62,7 +62,7 @@ function showConfigError() {
 
 // Verificar autenticação
 async function checkAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     
     if (session) {
         await loadUserData(session.user);
@@ -74,7 +74,7 @@ async function checkAuth() {
 
 // Carregar dados do usuário
 async function loadUserData(user) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('usuarios')
         .select('*')
         .eq('email', user.email)
@@ -144,7 +144,7 @@ async function handleLogin(e) {
     
     try {
         // Buscar usuário
-        const { data: usuario, error: userError } = await supabase
+        const { data: usuario, error: userError } = await supabaseClient
             .from('usuarios')
             .select('*')
             .eq('username', username)
@@ -155,7 +155,7 @@ async function handleLogin(e) {
         }
         
         // Fazer login com Supabase Auth
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: usuario.email,
             password: password
         });
@@ -176,7 +176,7 @@ async function handleLogin(e) {
 
 // Logout
 async function handleLogout() {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     currentUser = null;
     isAdmin = false;
     showLoginScreen();
@@ -199,7 +199,7 @@ function showMainScreen() {
 
 // Carregar Notas Fiscais
 async function loadNotasFiscais() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('notas_fiscais')
         .select('*')
         .order('data', { ascending: false })
@@ -328,7 +328,7 @@ function confirmDelete(id) {
 async function deleteNotaFiscal() {
     if (!deleteNFId) return;
     
-    const { error } = await supabase
+    const { error } = await supabaseClient
         .from('notas_fiscais')
         .delete()
         .eq('id', deleteNFId);
@@ -364,7 +364,7 @@ async function handleNFSubmit(e) {
         // Fiscais só podem editar hora_saida
         const updateData = isAdmin ? nfData : { hora_saida: nfData.hora_saida };
         
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('notas_fiscais')
             .update(updateData)
             .eq('id', editingNFId);
@@ -375,7 +375,7 @@ async function handleNFSubmit(e) {
         }
     } else {
         // Criar nova
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('notas_fiscais')
             .insert([nfData]);
         
