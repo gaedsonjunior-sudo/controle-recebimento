@@ -53,6 +53,11 @@ body {
     display: block;
 }
 
+/* Login Screen sempre flex quando ativa */
+#loginScreen.active {
+    display: flex;
+}
+
 /* Login Screen */
 #loginScreen {
     display: flex;
@@ -389,7 +394,7 @@ body {
 
 .notas-table th {
     padding: 16px;
-    text-align: left;
+    text-align: center;
     font-weight: 700;
     color: var(--text-secondary);
     font-size: 13px;
@@ -402,6 +407,12 @@ body {
     padding: 16px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
+    text-align: center;
+}
+
+/* Fornecedor alinhado à esquerda */
+.notas-table td:nth-child(2) {
+    text-align: left;
 }
 
 .notas-table tbody tr {
@@ -628,6 +639,34 @@ body {
 
     .controls-section {
         flex-direction: column;
+        align-items: center;
+    }
+    
+    .filters-container {
+        width: 100%;
+        max-width: 100%;
+        padding: 16px;
+        margin: 0 auto;
+    }
+    
+    .filters-container h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .filters-grid {
+        gap: 12px;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    #newNFBtn {
+        width: 100%;
+        margin-top: 12px;
     }
 
     .header-content {

@@ -211,12 +211,16 @@ async function handleLogout() {
 // Mostrar telas
 function showLoginScreen() {
     loginScreen.classList.add('active');
+    loginScreen.style.display = 'flex';
     mainScreen.classList.remove('active');
+    mainScreen.style.display = 'none';
 }
 
 function showMainScreen() {
     loginScreen.classList.remove('active');
+    loginScreen.style.display = 'none';
     mainScreen.classList.add('active');
+    mainScreen.style.display = 'block';
     currentUserName.textContent = currentUser.nome;
     currentUserRole.textContent = isAdmin ? 'Administrador' : 'Fiscal';
     loadNotasFiscais();
@@ -466,7 +470,10 @@ function parseCurrency(value) {
 
 function formatNF(e) {
     let value = e.target.value.replace(/\D/g, '');
-    value = value.replace(/(\d{3})(?=\d)/g, '$1.');
+    // Formatar da direita para esquerda
+    if (value.length > 3) {
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
     e.target.value = value;
 }
 
