@@ -5,6 +5,9 @@ let notasFiscais = [];
 let editingNFId = null;
 let deleteNFId = null;
 
+// Cliente Supabase
+let supabase = null;
+
 // Elementos do DOM
 const loginScreen = document.getElementById('loginScreen');
 const mainScreen = document.getElementById('mainScreen');
@@ -23,15 +26,22 @@ const totalNotas = document.getElementById('totalNotas');
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
-    // Verificar se o Supabase foi inicializado
-    if (!supabase) {
-        console.error('❌ Supabase não inicializado');
-        showConfigError();
-        return;
-    }
-    
-    checkAuth();
-    setupEventListeners();
+    // Aguardar config.js carregar
+    setTimeout(() => {
+        // Pegar cliente do window
+        supabase = window.supabaseClient;
+        
+        // Verificar se o Supabase foi inicializado
+        if (!supabase) {
+            console.error('❌ Supabase não inicializado');
+            showConfigError();
+            return;
+        }
+        
+        console.log('✅ Supabase carregado com sucesso!');
+        checkAuth();
+        setupEventListeners();
+    }, 500);
 });
 
 // Mostrar erro de configuração
