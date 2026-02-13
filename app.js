@@ -143,32 +143,57 @@ async function handleLogin(e) {
     loginError.classList.remove('show');
     
     try {
-        // Buscar usuário
-        const { data: usuario, error: userError } = await supabaseClient
+        // Primeiro, buscar o email do usuário pelo username
+        const { data: usuarios, error: searchError } = await supabaseClient
             .from('usuarios')
-            .select('*')
-            .eq('username', username)
-            .single();
+            .select('email')
+            .eq('username', username);
         
-        if (userError || !usuario) {
-            throw new Error('Usuário ou senha inválidos');
+        if (searchError) {
+            console.error('Erro ao buscar usuário:', searchError);
+            throw new Error('Erro ao conectar com o banco de dados');
         }
         
-        // Fazer login com Supabase Auth
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: usuario.email,
+        if (!usuarios || usuarios.length === 0) {
+            throw new Error('Usuário não encontrado');
+        }
+        
+        const userEmail = usuarios[0].email;
+        
+        // Fazer login com Supabase Auth usando o email
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+            email: userEmail,
             password: password
         });
         
-        if (error) throw error;
+        if (authError) {
+            console.error('Erro de autenticação:', authError);
+            throw new Error('Senha incorreta');
+        }
         
-        currentUser = usuario;
-        isAdmin = usuario.role === 'admin';
+        // Buscar dados completos do usuário após login bem-sucedido
+        const { data: userData, error: userError } = await supabaseClient
+            .from('usuarios')
+            .select('*')
+            .eq('email', userEmail)
+            .single();
+        
+        if (userError || !userData) {
+            throw new Error('Erro ao carregar dados do usuário');
+        }
+        
+        currentUser = userData;
+        isAdmin = userData.role === 'admin';
+        
+        console.log('✅ Login realizado com sucesso!');
+        console.log('Usuário:', currentUser.nome);
+        console.log('Role:', currentUser.role);
         
         showMainScreen();
         loadNotasFiscais();
         
     } catch (error) {
+        console.error('Erro no login:', error);
         loginError.textContent = error.message || 'Erro ao fazer login';
         loginError.classList.add('show');
     }
