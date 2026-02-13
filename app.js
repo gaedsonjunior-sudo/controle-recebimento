@@ -261,7 +261,6 @@ async function loadNotasFiscais() {
         defaultHeader.classList.add(`sort-${currentSortDirection}`);
     }
 }
-}
 
 // Renderizar Notas Fiscais
 function renderNotasFiscais(notas) {
