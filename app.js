@@ -118,7 +118,6 @@ function setupEventListeners() {
     // Filtros
     document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
     document.getElementById('filterNF').addEventListener('input', applyFilters);
-    document.getElementById('filterFiscal').addEventListener('input', applyFilters);
     document.getElementById('filterData').addEventListener('change', applyFilters);
     document.getElementById('filterStatus').addEventListener('change', applyFilters);
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
@@ -134,8 +133,10 @@ function setupEventListeners() {
     confirmModal.addEventListener('click', (e) => {
         if (e.target === confirmModal) closeConfirmModal();
     });
-    
-    // Ordenação por colunas
+}
+
+// Setup listeners de ordenação (chamado após carregar dados)
+function setupSortListeners() {
     document.querySelectorAll('.sortable').forEach(header => {
         header.addEventListener('click', () => {
             const column = header.dataset.column;
@@ -260,6 +261,9 @@ async function loadNotasFiscais() {
     if (defaultHeader) {
         defaultHeader.classList.add(`sort-${currentSortDirection}`);
     }
+    
+    // Configurar listeners de ordenação após renderizar tabela
+    setupSortListeners();
 }
 
 // Renderizar Notas Fiscais
