@@ -66,10 +66,6 @@
                             <input type="text" id="filterNF" placeholder="Buscar nº...">
                         </div>
                         <div class="filter-group">
-                            <label for="filterFiscal">Fiscal</label>
-                            <input type="text" id="filterFiscal" placeholder="Buscar fiscal...">
-                        </div>
-                        <div class="filter-group">
                             <label for="filterData">Data</label>
                             <input type="date" id="filterData">
                         </div>
@@ -110,7 +106,7 @@
                                 <th class="sortable" data-column="hora_chegada">Hora Chegada <span class="sort-icon">⇅</span></th>
                                 <th>Temperatura</th>
                                 <th class="sortable" data-column="hora_saida">Hora Saída <span class="sort-icon">⇅</span></th>
-                                <th class="sortable" data-column="fiscal_nome">Fiscal <span class="sort-icon">⇅</span></th>
+                                <th class="sortable" data-column="observacao">Observação <span class="sort-icon">⇅</span></th>
                                 <th class="sortable" data-column="status">Status <span class="sort-icon">⇅</span></th>
                                 <th class="actions-column">Ações</th>
                             </tr>
@@ -182,6 +178,13 @@
                             <option value="Não Acatada">Não Acatada</option>
                             <option value="Acatada">Acatada</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="nfObservacao">Observação</label>
+                        <textarea id="nfObservacao" placeholder="Ex: Recebeu no dia seguinte, fora do horário, etc..." rows="3"></textarea>
                     </div>
                 </div>
 

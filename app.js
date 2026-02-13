@@ -285,7 +285,7 @@ function renderNotasFiscais(notas) {
             <td>${nota.hora_chegada}</td>
             <td>${nota.temperatura || '-'}</td>
             <td>${nota.hora_saida || '-'}</td>
-            <td>${nota.fiscal_nome}</td>
+            <td class="observacao-cell">${nota.observacao || '-'}</td>
             <td>
                 <span class="status-badge status-${nota.status === 'Acatada' ? 'acatada' : 'nao-acatada'}">
                     ${nota.status}
@@ -341,6 +341,7 @@ async function editNotaFiscal(id) {
     document.getElementById('nfHoraChegada').value = nota.hora_chegada;
     document.getElementById('nfTemperatura').value = nota.temperatura || '';
     document.getElementById('nfHoraSaida').value = nota.hora_saida || '';
+    document.getElementById('nfObservacao').value = nota.observacao || '';
     document.getElementById('nfStatus').value = nota.status;
     
     // Mostrar campo status para admin
@@ -456,15 +457,17 @@ async function handleNFSubmit(e) {
         hora_chegada: document.getElementById('nfHoraChegada').value,
         temperatura: document.getElementById('nfTemperatura').value || null,
         hora_saida: document.getElementById('nfHoraSaida').value || null,
-        fiscal_nome: currentUser.nome,
-        fiscal_id: currentUser.id,
+        observacao: document.getElementById('nfObservacao').value || null,
         status: isAdmin ? document.getElementById('nfStatus').value : 'Não Acatada'
     };
     
     if (editingNFId) {
         // Atualizar
-        // Fiscais só podem editar hora_saida
-        const updateData = isAdmin ? nfData : { hora_saida: nfData.hora_saida };
+        // Fiscais podem editar hora_saida e observacao
+        const updateData = isAdmin ? nfData : { 
+            hora_saida: nfData.hora_saida,
+            observacao: nfData.observacao 
+        };
         
         const { error } = await supabaseClient
             .from('notas_fiscais')
@@ -495,18 +498,16 @@ async function handleNFSubmit(e) {
 function applyFilters() {
     const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
     const nf = document.getElementById('filterNF').value;
-    const fiscal = document.getElementById('filterFiscal').value.toLowerCase();
     const data = document.getElementById('filterData').value;
     const status = document.getElementById('filterStatus').value;
     
     const filtered = notasFiscais.filter(nota => {
         const matchFornecedor = !fornecedor || nota.fornecedor.toLowerCase().includes(fornecedor);
         const matchNF = !nf || nota.numero_nf.toString().includes(nf.replace(/\./g, ''));
-        const matchFiscal = !fiscal || nota.fiscal_nome.toLowerCase().includes(fiscal);
         const matchData = !data || nota.data === data;
         const matchStatus = !status || nota.status === status;
         
-        return matchFornecedor && matchNF && matchFiscal && matchData && matchStatus;
+        return matchFornecedor && matchNF && matchData && matchStatus;
     });
     
     // Aplicar ordenação atual
@@ -517,7 +518,6 @@ function applyFilters() {
 function clearFilters() {
     document.getElementById('filterFornecedor').value = '';
     document.getElementById('filterNF').value = '';
-    document.getElementById('filterFiscal').value = '';
     document.getElementById('filterData').value = '';
     document.getElementById('filterStatus').value = '';
     
