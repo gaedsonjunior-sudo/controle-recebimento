@@ -390,9 +390,8 @@ function handleSort(column) {
     const activeHeader = document.querySelector(`[data-column="${column}"]`);
     activeHeader.classList.add(`sort-${currentSortDirection}`);
     
-    // Ordenar e renderizar
-    const sorted = sortNotas([...notasFiscais], column, currentSortDirection);
-    renderNotasFiscais(sorted);
+    // Aplicar filtros primeiro, depois ordenar
+    applyFilters();
 }
 
 function sortNotas(notas, column, direction) {
