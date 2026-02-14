@@ -462,6 +462,8 @@ async function handleNFSubmit(e) {
         temperatura: document.getElementById('nfTemperatura').value || null,
         hora_saida: document.getElementById('nfHoraSaida').value || null,
         observacao: document.getElementById('nfObservacao').value || null,
+        fiscal_nome: currentUser ? currentUser.nome : 'Sistema', // Manter para compatibilidade
+        fiscal_id: currentUser ? currentUser.id : null, // Manter para compatibilidade
         status: isAdmin ? document.getElementById('nfStatus').value : 'Não Acatada'
     };
     
