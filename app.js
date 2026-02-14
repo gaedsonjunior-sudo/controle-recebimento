@@ -489,7 +489,8 @@ async function handleNFSubmit(e) {
             .insert([nfData]);
         
         if (error) {
-            alert('Erro ao criar nota fiscal');
+            console.error('Erro detalhado:', error);
+            alert('Erro ao criar nota fiscal: ' + (error.message || 'Erro desconhecido'));
             return;
         }
     }
