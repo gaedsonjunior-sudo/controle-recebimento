@@ -322,11 +322,22 @@ body {
 
 .controls-section {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.filters-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 0;
+}
+
+.filters-wrapper.show {
+    max-height: 500px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
 }
 
 .filters-container {
@@ -334,8 +345,6 @@ body {
     border-radius: var(--border-radius-card);
     padding: 14px 16px;
     box-shadow: var(--shadow-card);
-    flex: 1;
-    min-width: 300px;
     border: 0.5px solid var(--separator-color);
 }
 

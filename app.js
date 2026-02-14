@@ -21,6 +21,8 @@ const logoutBtn = document.getElementById('logoutBtn');
 const currentUserName = document.getElementById('currentUserName');
 const currentUserRole = document.getElementById('currentUserRole');
 const newNFBtn = document.getElementById('newNFBtn');
+const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+const filtersWrapper = document.getElementById('filtersWrapper');
 const nfModal = document.getElementById('nfModal');
 const confirmModal = document.getElementById('confirmModal');
 const nfForm = document.getElementById('nfForm');
@@ -102,6 +104,9 @@ function setupEventListeners() {
     
     // Nova NF
     newNFBtn.addEventListener('click', openNewNFModal);
+    
+    // Toggle Filtros
+    toggleFiltersBtn.addEventListener('click', toggleFilters);
     
     // Fechar modals
     document.getElementById('closeModal').addEventListener('click', closeNFModal);
@@ -326,6 +331,18 @@ function openNewNFModal() {
     }
     
     nfModal.classList.add('active');
+}
+
+// Toggle Filtros
+function toggleFilters() {
+    filtersWrapper.classList.toggle('show');
+    
+    // Atualizar texto do botão
+    if (filtersWrapper.classList.contains('show')) {
+        toggleFiltersBtn.innerHTML = '<span class="btn-icon">🔍</span> Ocultar Filtros';
+    } else {
+        toggleFiltersBtn.innerHTML = '<span class="btn-icon">🔍</span> Filtros';
+    }
 }
 
 // Editar Nota Fiscal
