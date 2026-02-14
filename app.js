@@ -413,6 +413,13 @@ function sortNotas(notas, column, direction) {
         } else if (column === 'data') {
             // Datas
             comparison = new Date(valueA) - new Date(valueB);
+            
+            // Se as datas forem iguais, ordenar por hora de chegada
+            if (comparison === 0) {
+                const horaA = a.hora_chegada || '00:00';
+                const horaB = b.hora_chegada || '00:00';
+                comparison = horaA.localeCompare(horaB);
+            }
         } else if (column === 'hora_chegada' || column === 'hora_saida') {
             // Horas
             comparison = (valueA || '00:00').localeCompare(valueB || '00:00');
