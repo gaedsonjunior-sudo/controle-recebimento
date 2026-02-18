@@ -128,9 +128,7 @@ function setupEventListeners() {
     // Filtros
     document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
     document.getElementById('filterNF').addEventListener('input', applyFilters);
-    document.getElementById('filterData').addEventListener('change', applyFilters);
-    document.getElementById('filterDataMultiplas').addEventListener('input', formatMultipleDates);
-    document.getElementById('filterDataMultiplas').addEventListener('input', applyFilters);
+    document.getElementById('filterData').addEventListener('input', handleDateInput);
     document.getElementById('filterStatus').addEventListener('change', applyFilters);
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
     
@@ -549,20 +547,23 @@ function sortNotas(notas, column, direction) {
         // Comparar pela coluna principal
         let comparison = compareValues(a[column], b[column], column);
         
-        // Se forem iguais, usar histórico de ordenações
+        // Se valores forem iguais, usar histórico de ordenações
         if (comparison === 0 && sortHistory.length > 0) {
             for (let sort of sortHistory) {
-                comparison = compareValues(a[sort.column], b[sort.column], sort.column);
-                if (comparison !== 0) {
+                const histComp = compareValues(a[sort.column], b[sort.column], sort.column);
+                if (histComp !== 0) {
                     // Aplicar direção do histórico
-                    comparison = sort.direction === 'asc' ? comparison : -comparison;
-                    break;
+                    return sort.direction === 'asc' ? histComp : -histComp;
                 }
             }
         }
         
-        // Aplicar direção principal
-        return direction === 'asc' ? comparison : -comparison;
+        // Aplicar direção principal se não houver empate ou sem histórico
+        if (comparison !== 0) {
+            return direction === 'asc' ? comparison : -comparison;
+        }
+        
+        return 0;
     });
 }
 
@@ -669,21 +670,14 @@ async function handleNFSubmit(e) {
 function applyFilters() {
     const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
     const nf = document.getElementById('filterNF').value;
-    const dataSingle = document.getElementById('filterData').value; // Data única do calendário
-    const dataMultiplasInput = document.getElementById('filterDataMultiplas').value;
+    const dataInput = document.getElementById('filterData').value;
     const status = document.getElementById('filterStatus').value;
     
     // Processar múltiplas datas (converter dd/mm/aaaa para aaaa-mm-dd)
     let datas = [];
     
-    // Adicionar data única se existir
-    if (dataSingle) {
-        datas.push(dataSingle);
-    }
-    
-    // Adicionar datas múltiplas se existirem
-    if (dataMultiplasInput) {
-        const datasExtras = dataMultiplasInput
+    if (dataInput) {
+        datas = dataInput
             .split(',')
             .map(d => d.trim())
             .filter(d => d.length > 0)
@@ -697,8 +691,6 @@ function applyFilters() {
                 return null;
             })
             .filter(d => d !== null);
-        
-        datas = [...datas, ...datasExtras];
     }
     
     const filtered = notasFiscais.filter(nota => {
@@ -719,7 +711,6 @@ function clearFilters() {
     document.getElementById('filterFornecedor').value = '';
     document.getElementById('filterNF').value = '';
     document.getElementById('filterData').value = '';
-    document.getElementById('filterDataMultiplas').value = '';
     document.getElementById('filterStatus').value = '';
     
     // Aplicar ordenação atual
@@ -764,8 +755,8 @@ function formatNFNumber(value) {
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-// Formatar múltiplas datas automaticamente
-function formatMultipleDates(e) {
+// Formatar datas automaticamente e aplicar filtros
+function formatAndApplyDates(e) {
     let value = e.target.value;
     
     // Remove tudo que não é número, vírgula ou barra
@@ -791,6 +782,77 @@ function formatMultipleDates(e) {
     });
     
     e.target.value = dates.join(', ');
+    
+    // Aplicar filtros após formatação
+    applyFilters();
+}
+
+// Abrir calendário nativo para adicionar data
+function openCalendarPicker() {
+    const helperInput = document.getElementById('filterDataHelper');
+    const mainInput = document.getElementById('filterData');
+    
+    helperInput.click();
+    helperInput.focus();
+    
+    // Quando selecionar uma data
+    helperInput.onchange = function() {
+        if (this.value) {
+            // Converter aaaa-mm-dd para dd/mm/aaaa
+            const [ano, mes, dia] = this.value.split('-');
+            const dataFormatada = `${dia}/${mes}/${ano}`;
+            
+            // Adicionar à lista existente
+            const currentValue = mainInput.value.trim();
+            if (currentValue) {
+                // Verifica se a data já não está na lista
+                const datas = currentValue.split(',').map(d => d.trim());
+                if (!datas.includes(dataFormatada)) {
+                    mainInput.value = currentValue + ', ' + dataFormatada;
+                }
+            } else {
+                mainInput.value = dataFormatada;
+            }
+            
+            // Limpar helper
+            this.value = '';
+            
+            // Aplicar filtros
+            applyFilters();
+        }
+    };
+}
+
+// Formatar data automaticamente enquanto digita
+function handleDateInput(e) {
+    let value = e.target.value;
+    
+    // Remove tudo que não é número, vírgula ou barra
+    value = value.replace(/[^\d,/]/g, '');
+    
+    // Divide por vírgula
+    let dates = value.split(',');
+    
+    // Formata cada data
+    dates = dates.map(date => {
+        // Remove espaços
+        date = date.trim().replace(/\D/g, '');
+        
+        // Adiciona barras automaticamente
+        if (date.length >= 2) {
+            date = date.slice(0, 2) + '/' + date.slice(2);
+        }
+        if (date.length >= 5) {
+            date = date.slice(0, 5) + '/' + date.slice(5, 9);
+        }
+        
+        return date;
+    });
+    
+    e.target.value = dates.join(', ');
+    
+    // Aplicar filtros após formatação
+    applyFilters();
 }
 
 function formatDate(dateString) {
