@@ -8,6 +8,7 @@ let deleteNFId = null;
 // Controle de ordenação
 let currentSortColumn = 'data';
 let currentSortDirection = 'desc'; // desc = mais recente primeiro
+let sortHistory = []; // Histórico de ordenações para ordenação multi-nível
 
 // Variável para o cliente Supabase (será preenchida após carregamento)
 let supabaseClient = null;
@@ -128,6 +129,8 @@ function setupEventListeners() {
     document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
     document.getElementById('filterNF').addEventListener('input', applyFilters);
     document.getElementById('filterData').addEventListener('change', applyFilters);
+    document.getElementById('filterDataMultiplas').addEventListener('input', formatMultipleDates);
+    document.getElementById('filterDataMultiplas').addEventListener('input', applyFilters);
     document.getElementById('filterStatus').addEventListener('change', applyFilters);
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
     
@@ -509,7 +512,22 @@ function handleSort(column) {
     if (currentSortColumn === column) {
         currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-        // Nova coluna, começa com ascendente
+        // Nova coluna
+        // Adicionar coluna anterior ao histórico (se não for a mesma)
+        if (currentSortColumn && currentSortColumn !== column) {
+            // Remove da história se já existe
+            sortHistory = sortHistory.filter(s => s.column !== currentSortColumn);
+            // Adiciona no início
+            sortHistory.unshift({
+                column: currentSortColumn,
+                direction: currentSortDirection
+            });
+            // Manter apenas últimas 2 ordenações no histórico
+            if (sortHistory.length > 2) {
+                sortHistory = sortHistory.slice(0, 2);
+            }
+        }
+        
         currentSortColumn = column;
         currentSortDirection = 'asc';
     }
@@ -528,32 +546,44 @@ function handleSort(column) {
 
 function sortNotas(notas, column, direction) {
     return notas.sort((a, b) => {
-        let valueA = a[column];
-        let valueB = b[column];
+        // Comparar pela coluna principal
+        let comparison = compareValues(a[column], b[column], column);
         
-        // Tratar valores nulos
-        if (valueA === null || valueA === undefined) return 1;
-        if (valueB === null || valueB === undefined) return -1;
-        
-        // Comparação por tipo
-        let comparison = 0;
-        
-        if (column === 'valor' || column === 'numero_nf') {
-            // Números
-            comparison = parseFloat(valueA) - parseFloat(valueB);
-        } else if (column === 'data') {
-            // Datas
-            comparison = new Date(valueA) - new Date(valueB);
-        } else if (column === 'hora_chegada' || column === 'hora_saida') {
-            // Horas
-            comparison = (valueA || '00:00').localeCompare(valueB || '00:00');
-        } else {
-            // Texto
-            comparison = String(valueA).localeCompare(String(valueB), 'pt-BR', { sensitivity: 'base' });
+        // Se forem iguais, usar histórico de ordenações
+        if (comparison === 0 && sortHistory.length > 0) {
+            for (let sort of sortHistory) {
+                comparison = compareValues(a[sort.column], b[sort.column], sort.column);
+                if (comparison !== 0) {
+                    // Aplicar direção do histórico
+                    comparison = sort.direction === 'asc' ? comparison : -comparison;
+                    break;
+                }
+            }
         }
         
+        // Aplicar direção principal
         return direction === 'asc' ? comparison : -comparison;
     });
+}
+
+function compareValues(valueA, valueB, column) {
+    // Tratar valores nulos
+    if (valueA === null || valueA === undefined) return 1;
+    if (valueB === null || valueB === undefined) return -1;
+    
+    if (column === 'valor' || column === 'numero_nf') {
+        // Números
+        return parseFloat(valueA) - parseFloat(valueB);
+    } else if (column === 'data') {
+        // Datas
+        return new Date(valueA) - new Date(valueB);
+    } else if (column === 'hora_chegada' || column === 'hora_saida') {
+        // Horas
+        return (valueA || '00:00').localeCompare(valueB || '00:00');
+    } else {
+        // Texto
+        return String(valueA).localeCompare(String(valueB), 'pt-BR', { sensitivity: 'base' });
+    }
 }
 
 // Confirmar delete
@@ -639,14 +669,37 @@ async function handleNFSubmit(e) {
 function applyFilters() {
     const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
     const nf = document.getElementById('filterNF').value;
-    const dataInput = document.getElementById('filterData').value;
+    const dataSingle = document.getElementById('filterData').value; // Data única do calendário
+    const dataMultiplasInput = document.getElementById('filterDataMultiplas').value;
     const status = document.getElementById('filterStatus').value;
     
-    // Processar múltiplas datas
-    const datas = dataInput
-        .split(',')
-        .map(d => d.trim())
-        .filter(d => d.length > 0);
+    // Processar múltiplas datas (converter dd/mm/aaaa para aaaa-mm-dd)
+    let datas = [];
+    
+    // Adicionar data única se existir
+    if (dataSingle) {
+        datas.push(dataSingle);
+    }
+    
+    // Adicionar datas múltiplas se existirem
+    if (dataMultiplasInput) {
+        const datasExtras = dataMultiplasInput
+            .split(',')
+            .map(d => d.trim())
+            .filter(d => d.length > 0)
+            .map(d => {
+                // Converter dd/mm/aaaa para aaaa-mm-dd
+                const parts = d.split('/');
+                if (parts.length === 3) {
+                    const [dia, mes, ano] = parts;
+                    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+                }
+                return null;
+            })
+            .filter(d => d !== null);
+        
+        datas = [...datas, ...datasExtras];
+    }
     
     const filtered = notasFiscais.filter(nota => {
         const matchFornecedor = !fornecedor || nota.fornecedor.toLowerCase().includes(fornecedor);
@@ -666,6 +719,7 @@ function clearFilters() {
     document.getElementById('filterFornecedor').value = '';
     document.getElementById('filterNF').value = '';
     document.getElementById('filterData').value = '';
+    document.getElementById('filterDataMultiplas').value = '';
     document.getElementById('filterStatus').value = '';
     
     // Aplicar ordenação atual
@@ -708,6 +762,35 @@ function formatNFNumber(value) {
     let numStr = value.toString().replace(/\./g, '');
     // Formatar da direita para esquerda
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Formatar múltiplas datas automaticamente
+function formatMultipleDates(e) {
+    let value = e.target.value;
+    
+    // Remove tudo que não é número, vírgula ou barra
+    value = value.replace(/[^\d,/]/g, '');
+    
+    // Divide por vírgula
+    let dates = value.split(',');
+    
+    // Formata cada data
+    dates = dates.map(date => {
+        // Remove espaços
+        date = date.trim().replace(/\D/g, '');
+        
+        // Adiciona barras automaticamente
+        if (date.length >= 2) {
+            date = date.slice(0, 2) + '/' + date.slice(2);
+        }
+        if (date.length >= 5) {
+            date = date.slice(0, 5) + '/' + date.slice(5, 9);
+        }
+        
+        return date;
+    });
+    
+    e.target.value = dates.join(', ');
 }
 
 function formatDate(dateString) {

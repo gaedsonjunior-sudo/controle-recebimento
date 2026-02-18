@@ -360,6 +360,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 10px;
+    align-items: end;
 }
 
 .filter-group {
@@ -378,8 +379,14 @@ body {
 .filter-hint {
     font-size: 11px;
     color: var(--text-tertiary);
-    margin-top: 4px;
+    margin-top: 2px;
     display: block;
+}
+
+.filter-actions {
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 2px;
 }
 
 .filter-group input,
