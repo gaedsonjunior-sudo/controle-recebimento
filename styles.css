@@ -375,6 +375,13 @@ body {
     letter-spacing: -0.1px;
 }
 
+.filter-hint {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    display: block;
+}
+
 .filter-group input,
 .filter-group select {
     padding: 10px 12px;

@@ -58,6 +58,10 @@
                     <span class="btn-icon">🔍</span>
                     Filtros
                 </button>
+                <button id="exportReportBtn" class="btn btn-secondary">
+                    <span class="btn-icon">📊</span>
+                    Exportar Relatório
+                </button>
                 <button id="newNFBtn" class="btn btn-primary btn-large">
                     <span class="btn-icon">+</span>
                     Nova Nota Fiscal
@@ -77,8 +81,9 @@
                             <input type="text" id="filterNF" placeholder="Buscar nº...">
                         </div>
                         <div class="filter-group">
-                            <label for="filterData">Data</label>
-                            <input type="date" id="filterData">
+                            <label for="filterData">Datas (separe por vírgula)</label>
+                            <input type="text" id="filterData" placeholder="Ex: 2024-02-12, 2024-02-13">
+                            <small class="filter-hint">Digite datas no formato AAAA-MM-DD separadas por vírgula</small>
                         </div>
                         <div class="filter-group">
                             <label for="filterStatus">Status</label>
@@ -223,6 +228,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="config.js"></script>
     <script src="app.js"></script>
 </body>

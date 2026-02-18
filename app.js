@@ -22,6 +22,7 @@ const currentUserName = document.getElementById('currentUserName');
 const currentUserRole = document.getElementById('currentUserRole');
 const newNFBtn = document.getElementById('newNFBtn');
 const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+const exportReportBtn = document.getElementById('exportReportBtn');
 const filtersWrapper = document.getElementById('filtersWrapper');
 const nfModal = document.getElementById('nfModal');
 const confirmModal = document.getElementById('confirmModal');
@@ -107,6 +108,9 @@ function setupEventListeners() {
     
     // Toggle Filtros
     toggleFiltersBtn.addEventListener('click', toggleFilters);
+    
+    // Exportar Relatório
+    exportReportBtn.addEventListener('click', exportReport);
     
     // Fechar modals
     document.getElementById('closeModal').addEventListener('click', closeNFModal);
@@ -345,6 +349,117 @@ function toggleFilters() {
     }
 }
 
+// Exportar Relatório
+async function exportReport() {
+    try {
+        // Pegar apenas as linhas visíveis da tabela
+        const tableContainer = document.querySelector('.table-container');
+        
+        if (!tableContainer) {
+            alert('Nenhuma tabela encontrada!');
+            return;
+        }
+        
+        // Verificar se há notas para exportar
+        const rows = document.querySelectorAll('#notasTableBody tr');
+        if (rows.length === 0) {
+            alert('Nenhuma nota para exportar! Aplique filtros ou adicione notas.');
+            return;
+        }
+        
+        // Mostrar loading
+        exportReportBtn.disabled = true;
+        exportReportBtn.innerHTML = '<span class="btn-icon">⏳</span> Gerando...';
+        
+        // Criar container para o relatório
+        const reportContainer = document.createElement('div');
+        reportContainer.style.cssText = `
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            background: white;
+            padding: 30px;
+            width: 1000px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        `;
+        
+        // Cabeçalho do relatório
+        const header = document.createElement('div');
+        header.style.cssText = 'margin-bottom: 20px; border-bottom: 3px solid #007AFF; padding-bottom: 15px;';
+        header.innerHTML = `
+            <h1 style="margin: 0; color: #000; font-size: 24px; font-weight: 700;">📦 Relatório de Notas Fiscais</h1>
+            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Total de registros: ${rows.length}</p>
+        `;
+        
+        // Clonar tabela
+        const tableClone = document.querySelector('.notas-table').cloneNode(true);
+        tableClone.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 13px;';
+        
+        // Remover coluna de ações
+        const thActions = tableClone.querySelector('th.actions-column');
+        if (thActions) thActions.remove();
+        tableClone.querySelectorAll('td.actions-column, .actions-column').forEach(td => td.remove());
+        
+        // Estilizar tabela
+        tableClone.querySelectorAll('th').forEach(th => {
+            th.style.cssText = 'background: #F2F2F7; padding: 12px 8px; border: 1px solid #E5E5EA; font-weight: 600; color: #000; text-align: center;';
+        });
+        
+        tableClone.querySelectorAll('td').forEach(td => {
+            td.style.cssText = 'padding: 10px 8px; border: 1px solid #E5E5EA; color: #000; text-align: center;';
+        });
+        
+        // Remover linhas vazias do tbody clonado e usar apenas as visíveis
+        const tbodyClone = tableClone.querySelector('tbody');
+        tbodyClone.innerHTML = '';
+        rows.forEach(row => {
+            tbodyClone.appendChild(row.cloneNode(true));
+        });
+        
+        // Montar relatório
+        reportContainer.appendChild(header);
+        reportContainer.appendChild(tableClone);
+        document.body.appendChild(reportContainer);
+        
+        // Capturar como imagem
+        const canvas = await html2canvas(reportContainer, {
+            backgroundColor: '#ffffff',
+            scale: 2, // Melhor qualidade
+            logging: false,
+            width: 1000,
+            windowWidth: 1000
+        });
+        
+        // Remover container temporário
+        document.body.removeChild(reportContainer);
+        
+        // Converter para blob e baixar
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio-notas-${new Date().toISOString().slice(0,10)}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            // Restaurar botão
+            exportReportBtn.disabled = false;
+            exportReportBtn.innerHTML = '<span class="btn-icon">📊</span> Exportar Relatório';
+            
+            alert('Relatório exportado com sucesso! Verifique seus downloads.');
+        });
+        
+    } catch (error) {
+        console.error('Erro ao exportar:', error);
+        alert('Erro ao gerar relatório. Tente novamente.');
+        
+        // Restaurar botão
+        exportReportBtn.disabled = false;
+        exportReportBtn.innerHTML = '<span class="btn-icon">📊</span> Exportar Relatório';
+    }
+}
+
 // Editar Nota Fiscal
 async function editNotaFiscal(id) {
     editingNFId = id;
@@ -429,14 +544,6 @@ function sortNotas(notas, column, direction) {
         } else if (column === 'data') {
             // Datas
             comparison = new Date(valueA) - new Date(valueB);
-            
-            // Se as datas forem iguais, ordenar por hora SEMPRE crescente
-            if (comparison === 0) {
-                const horaA = a.hora_chegada || '00:00';
-                const horaB = b.hora_chegada || '00:00';
-                // Hora sempre crescente (não inverte com direction)
-                return horaA.localeCompare(horaB);
-            }
         } else if (column === 'hora_chegada' || column === 'hora_saida') {
             // Horas
             comparison = (valueA || '00:00').localeCompare(valueB || '00:00');
@@ -470,7 +577,8 @@ async function deleteNotaFiscal() {
     }
     
     closeConfirmModal();
-    loadNotasFiscais();
+    await loadNotasFiscais();
+    applyFilters(); // Reaplicar filtros após deletar
 }
 
 // Submit Form NF
@@ -522,20 +630,28 @@ async function handleNFSubmit(e) {
     }
     
     closeNFModal();
-    loadNotasFiscais();
+    // Recarregar dados e aplicar filtros mantidos
+    await loadNotasFiscais();
+    applyFilters(); // Reaplicar filtros após recarregar
 }
 
 // Filtros
 function applyFilters() {
     const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
     const nf = document.getElementById('filterNF').value;
-    const data = document.getElementById('filterData').value;
+    const dataInput = document.getElementById('filterData').value;
     const status = document.getElementById('filterStatus').value;
+    
+    // Processar múltiplas datas
+    const datas = dataInput
+        .split(',')
+        .map(d => d.trim())
+        .filter(d => d.length > 0);
     
     const filtered = notasFiscais.filter(nota => {
         const matchFornecedor = !fornecedor || nota.fornecedor.toLowerCase().includes(fornecedor);
         const matchNF = !nf || nota.numero_nf.toString().includes(nf.replace(/\./g, ''));
-        const matchData = !data || nota.data === data;
+        const matchData = datas.length === 0 || datas.includes(nota.data);
         const matchStatus = !status || nota.status === status;
         
         return matchFornecedor && matchNF && matchData && matchStatus;
