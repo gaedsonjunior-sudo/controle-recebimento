@@ -633,9 +633,10 @@ async function handleNFSubmit(e) {
     
     if (editingNFId) {
         // Atualizar
-        // Fiscais podem editar hora_saida e observacao
+        // Fiscais podem editar hora_saida, temperatura e observacao
         const updateData = isAdmin ? nfData : { 
             hora_saida: nfData.hora_saida,
+            temperatura: nfData.temperatura,
             observacao: nfData.observacao 
         };
         
