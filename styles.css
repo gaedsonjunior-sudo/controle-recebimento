@@ -358,15 +358,15 @@ body {
 
 .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px;
-    align-items: end;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    align-items: start;
 }
 
 .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .filter-group label {
@@ -374,6 +374,7 @@ body {
     font-weight: 600;
     color: var(--text-secondary);
     letter-spacing: -0.1px;
+    min-height: 18px;
 }
 
 .filter-hint {
@@ -381,6 +382,7 @@ body {
     color: var(--text-tertiary);
     margin-top: 2px;
     display: block;
+    min-height: 14px;
 }
 
 .date-input-wrapper {
@@ -491,8 +493,13 @@ body {
 
 .filter-actions {
     display: flex;
-    align-items: flex-end;
-    padding-bottom: 2px;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.filter-actions label {
+    min-height: 18px;
+    opacity: 0;
 }
 
 .filter-group input,
