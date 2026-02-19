@@ -424,7 +424,7 @@ async function exportReport() {
             </div>
             
             <div style="background: #f8f9fa; border-left: 4px solid #007AFF; padding: 20px; margin-bottom: 25px;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 700; color: #000;">📊 RESUMO EXECUTIVO</h3>
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 700; color: #000;">📊 RESUMO</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px;">
                     <div>
                         <div style="color: #666; margin-bottom: 3px;">📅 Data do Relatório</div>
