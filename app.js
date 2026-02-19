@@ -128,7 +128,8 @@ function setupEventListeners() {
     // Filtros
     document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
     document.getElementById('filterNF').addEventListener('input', applyFilters);
-    document.getElementById('filterData').addEventListener('input', handleDateInput);
+    document.getElementById('openDatePicker').addEventListener('click', openDatePicker);
+    document.getElementById('datePickerHelper').addEventListener('change', handleDateSelection);
     document.getElementById('filterStatus').addEventListener('change', applyFilters);
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
     
@@ -670,28 +671,10 @@ async function handleNFSubmit(e) {
 function applyFilters() {
     const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
     const nf = document.getElementById('filterNF').value;
-    const dataInput = document.getElementById('filterData').value;
     const status = document.getElementById('filterStatus').value;
     
-    // Processar múltiplas datas (converter dd/mm/aaaa para aaaa-mm-dd)
-    let datas = [];
-    
-    if (dataInput) {
-        datas = dataInput
-            .split(',')
-            .map(d => d.trim())
-            .filter(d => d.length > 0)
-            .map(d => {
-                // Converter dd/mm/aaaa para aaaa-mm-dd
-                const parts = d.split('/');
-                if (parts.length === 3) {
-                    const [dia, mes, ano] = parts;
-                    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-                }
-                return null;
-            })
-            .filter(d => d !== null);
-    }
+    // Usar selectedDates global
+    const datas = selectedDates;
     
     const filtered = notasFiscais.filter(nota => {
         const matchFornecedor = !fornecedor || nota.fornecedor.toLowerCase().includes(fornecedor);
@@ -712,6 +695,10 @@ function clearFilters() {
     document.getElementById('filterNF').value = '';
     document.getElementById('filterData').value = '';
     document.getElementById('filterStatus').value = '';
+    
+    // Limpar datas selecionadas
+    selectedDates = [];
+    updateDateDisplay();
     
     // Aplicar ordenação atual
     const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
@@ -852,6 +839,64 @@ function handleDateInput(e) {
     e.target.value = dates.join(', ');
     
     // Aplicar filtros após formatação
+    applyFilters();
+}
+
+// Sistema de múltiplas datas
+let selectedDates = [];
+
+function openDatePicker() {
+    document.getElementById('datePickerHelper').showPicker();
+}
+
+function handleDateSelection(e) {
+    const selectedDate = e.target.value;
+    if (!selectedDate) return;
+    
+    // Converter para formato dd/mm/yyyy para exibição
+    const displayDate = formatDate(selectedDate);
+    
+    // Adicionar se não existir
+    if (!selectedDates.includes(selectedDate)) {
+        selectedDates.push(selectedDate);
+        updateDateDisplay();
+        applyFilters();
+    }
+    
+    // Limpar o helper para permitir nova seleção
+    e.target.value = '';
+}
+
+function updateDateDisplay() {
+    const display = document.getElementById('selectedDatesDisplay');
+    const input = document.getElementById('filterData');
+    
+    if (selectedDates.length === 0) {
+        display.innerHTML = '';
+        input.value = '';
+        return;
+    }
+    
+    // Atualizar input oculto com datas
+    input.value = selectedDates.join(',');
+    
+    // Criar tags visuais
+    display.innerHTML = selectedDates
+        .map(date => {
+            const displayDate = formatDate(date);
+            return `
+                <div class="date-tag">
+                    ${displayDate}
+                    <span class="date-tag-remove" onclick="removeDate('${date}')">×</span>
+                </div>
+            `;
+        })
+        .join('');
+}
+
+function removeDate(date) {
+    selectedDates = selectedDates.filter(d => d !== date);
+    updateDateDisplay();
     applyFilters();
 }
 

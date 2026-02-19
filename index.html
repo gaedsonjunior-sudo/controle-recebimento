@@ -82,8 +82,14 @@
                         </div>
                         <div class="filter-group">
                             <label for="filterData">Data(s)</label>
-                            <input type="text" id="filterData" placeholder="DD/MM/AAAA ou DD/MM/AAAA, DD/MM/AAAA">
-                            <!-- <small class="filter-hint">Digite a data. Use vírgula para múltiplas (ex: 12/02/2024, 13/02/2024)</small> -->
+                            <div class="date-picker-container">
+                                <input type="text" id="filterData" placeholder="Clique no calendário para selecionar" readonly>
+                                <button type="button" id="openDatePicker" class="date-picker-btn" title="Selecionar datas">
+                                    📅
+                                </button>
+                                <input type="date" id="datePickerHelper" class="date-helper">
+                            </div>
+                            <div id="selectedDatesDisplay" class="selected-dates"></div>
                         </div>
                         <div class="filter-group">
                             <label for="filterStatus">Status</label>
