@@ -373,6 +373,37 @@ async function exportReport() {
         exportReportBtn.disabled = true;
         exportReportBtn.innerHTML = '<span class="btn-icon">⏳</span> Gerando...';
         
+        // Coletar dados das notas visíveis
+        const notasVisiveis = [];
+        let totalValor = 0;
+        let countAcatada = 0;
+        let countNaoAcatada = 0;
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const status = cells[8].textContent.trim();
+            const valorText = cells[3].textContent.replace('R$', '').replace(/\./g, '').replace(',', '.');
+            const valor = parseFloat(valorText);
+            
+            if (status === 'Não Acatada') countNaoAcatada++;
+            if (status === 'Acatada') countAcatada++;
+            totalValor += valor;
+            
+            notasVisiveis.push({
+                data: cells[0].textContent.trim(),
+                fornecedor: cells[1].textContent.trim(),
+                nf: cells[2].textContent.trim(),
+                valor: cells[3].textContent.trim(),
+                hora: cells[4].textContent.trim(),
+                temperatura: cells[5].textContent.trim(),
+                horaSaida: cells[6].textContent.trim(),
+                status: status
+            });
+        });
+        
+        const percentAcatada = Math.round((countAcatada / rows.length) * 100);
+        const percentNaoAcatada = Math.round((countNaoAcatada / rows.length) * 100);
+        
         // Criar container para o relatório
         const reportContainer = document.createElement('div');
         reportContainer.style.cssText = `
@@ -380,57 +411,98 @@ async function exportReport() {
             left: -9999px;
             top: 0;
             background: white;
-            padding: 30px;
-            width: 1000px;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 40px;
+            width: 1100px;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', monospace, sans-serif;
         `;
         
-        // Cabeçalho do relatório
-        const header = document.createElement('div');
-        header.style.cssText = 'margin-bottom: 20px; border-bottom: 3px solid #007AFF; padding-bottom: 15px;';
-        header.innerHTML = `
-            <h1 style="margin: 0; color: #000; font-size: 24px; font-weight: 700;">📦 Relatório de Notas Fiscais</h1>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Total de registros: ${rows.length}</p>
+        // HTML do relatório estilo executivo
+        reportContainer.innerHTML = `
+            <div style="text-align: center; border-top: 4px solid #000; border-bottom: 4px solid #000; padding: 15px 0; margin-bottom: 25px;">
+                <h1 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px;">CONTROLE DE RECEBIMENTO</h1>
+                <h2 style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #666;">NOTAS FISCAIS - GPP</h2>
+            </div>
+            
+            <div style="background: #f8f9fa; border-left: 4px solid #007AFF; padding: 20px; margin-bottom: 25px;">
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 700; color: #000;">📊 RESUMO EXECUTIVO</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px;">
+                    <div>
+                        <div style="color: #666; margin-bottom: 3px;">📅 Data do Relatório</div>
+                        <div style="font-weight: 600;">${new Date().toLocaleString('pt-BR')}</div>
+                    </div>
+                    <div>
+                        <div style="color: #666; margin-bottom: 3px;">📦 Total de Notas</div>
+                        <div style="font-weight: 600; font-size: 18px; color: #007AFF;">${rows.length}</div>
+                    </div>
+                    <div>
+                        <div style="color: #666; margin-bottom: 3px;">⚠️ Não Acatadas</div>
+                        <div style="font-weight: 600; color: #FF3B30;">${countNaoAcatada} (${percentNaoAcatada}%)</div>
+                    </div>
+                    <div>
+                        <div style="color: #666; margin-bottom: 3px;">✅ Acatadas</div>
+                        <div style="font-weight: 600; color: #34C759;">${countAcatada} (${percentAcatada}%)</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <div style="color: #666; margin-bottom: 3px;">💰 Valor Total</div>
+                        <div style="font-weight: 700; font-size: 18px; color: #000;">R$ ${totalValor.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 10px 0; margin-bottom: 5px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <thead>
+                        <tr style="background: #000; color: white;">
+                            <th style="padding: 8px 5px; text-align: left; font-weight: 600;">DATA</th>
+                            <th style="padding: 8px 5px; text-align: left; font-weight: 600;">HORA</th>
+                            <th style="padding: 8px 5px; text-align: left; font-weight: 600;">FORNECEDOR</th>
+                            <th style="padding: 8px 5px; text-align: center; font-weight: 600;">NF</th>
+                            <th style="padding: 8px 5px; text-align: right; font-weight: 600;">VALOR</th>
+                            <th style="padding: 8px 5px; text-align: center; font-weight: 600;">STATUS</th>
+                            <th style="padding: 8px 5px; text-align: center; font-weight: 600;">TEMP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${notasVisiveis.map((nota, index) => {
+                            const statusIcon = nota.status === 'Acatada' ? '✅' : '⚠️';
+                            const statusText = nota.status === 'Acatada' ? 'SIM' : 'NÃO';
+                            const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                            return `
+                                <tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
+                                    <td style="padding: 8px 5px; font-weight: 500;">${nota.data.split('/')[0]}/${nota.data.split('/')[1]}</td>
+                                    <td style="padding: 8px 5px;">${nota.hora}</td>
+                                    <td style="padding: 8px 5px; font-weight: 600;">${nota.fornecedor}</td>
+                                    <td style="padding: 8px 5px; text-align: center; font-family: monospace;">${nota.nf}</td>
+                                    <td style="padding: 8px 5px; text-align: right; font-weight: 600;">${nota.valor}</td>
+                                    <td style="padding: 8px 5px; text-align: center; font-weight: 600;">${statusIcon} ${statusText}</td>
+                                    <td style="padding: 8px 5px; text-align: center;">${nota.temperatura}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="border-top: 2px solid #000; padding-top: 5px;"></div>
+            
+            ${countNaoAcatada > 0 ? `
+                <div style="background: #fff3cd; border-left: 4px solid #FF9500; padding: 15px; margin-top: 20px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #856404;">
+                        ⚠️ AÇÃO NECESSÁRIA: ${countNaoAcatada} nota${countNaoAcatada > 1 ? 's' : ''} pendente${countNaoAcatada > 1 ? 's' : ''} de aceitação
+                    </div>
+                </div>
+            ` : ''}
         `;
         
-        // Clonar tabela
-        const tableClone = document.querySelector('.notas-table').cloneNode(true);
-        tableClone.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 13px;';
-        
-        // Remover coluna de ações
-        const thActions = tableClone.querySelector('th.actions-column');
-        if (thActions) thActions.remove();
-        tableClone.querySelectorAll('td.actions-column, .actions-column').forEach(td => td.remove());
-        
-        // Estilizar tabela
-        tableClone.querySelectorAll('th').forEach(th => {
-            th.style.cssText = 'background: #F2F2F7; padding: 12px 8px; border: 1px solid #E5E5EA; font-weight: 600; color: #000; text-align: center;';
-        });
-        
-        tableClone.querySelectorAll('td').forEach(td => {
-            td.style.cssText = 'padding: 10px 8px; border: 1px solid #E5E5EA; color: #000; text-align: center;';
-        });
-        
-        // Remover linhas vazias do tbody clonado e usar apenas as visíveis
-        const tbodyClone = tableClone.querySelector('tbody');
-        tbodyClone.innerHTML = '';
-        rows.forEach(row => {
-            tbodyClone.appendChild(row.cloneNode(true));
-        });
-        
-        // Montar relatório
-        reportContainer.appendChild(header);
-        reportContainer.appendChild(tableClone);
         document.body.appendChild(reportContainer);
         
         // Capturar como imagem
         const canvas = await html2canvas(reportContainer, {
             backgroundColor: '#ffffff',
-            scale: 2, // Melhor qualidade
+            scale: 2,
             logging: false,
-            width: 1000,
-            windowWidth: 1000
+            width: 1100,
+            windowWidth: 1100
         });
         
         // Remover container temporário
