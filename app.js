@@ -488,7 +488,7 @@ async function exportReport() {
             ${countNaoAcatada > 0 ? `
                 <div style="background: #fff3cd; border-left: 4px solid #FF9500; padding: 15px; margin-top: 20px;">
                     <div style="font-weight: 700; font-size: 13px; color: #856404;">
-                        ⚠️ AÇÃO NECESSÁRIA: ${countNaoAcatada} nota${countNaoAcatada > 1 ? 's' : ''} pendente${countNaoAcatada > 1 ? 's' : ''} de aceitação
+                        ⚠️ AÇÃO NECESSÁRIA: ${countNaoAcatada} nota${countNaoAcatada > 1 ? 's' : ''} pendente${countNaoAcatada > 1 ? 's' : ''} de acatamento
                     </div>
                 </div>
             ` : ''}
