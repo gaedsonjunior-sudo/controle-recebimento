@@ -468,32 +468,46 @@ async function exportReport() {
             </div>
             
             <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 8px 0; margin-bottom: 5px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                     <thead>
                         <tr style="background: #000; color: white;">
-                            <th style="padding: 7px 4px; text-align: left; font-weight: 600; width: 70px;">DATA</th>
-                            <th style="padding: 7px 4px; text-align: left; font-weight: 600;">FORNECEDOR</th>
-                            <th style="padding: 7px 4px; text-align: center; font-weight: 600; width: 90px;">NF</th>
-                            <th style="padding: 7px 4px; text-align: right; font-weight: 600; width: 90px;">VALOR</th>
-                            <th style="padding: 7px 4px; text-align: center; font-weight: 600; width: 80px;">STATUS</th>
-                            <th style="padding: 7px 4px; text-align: center; font-weight: 600; width: 45px;">TEMP</th>
-                            <th style="padding: 7px 4px; text-align: left; font-weight: 600;">OBSERVAÇÃO</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">DATA</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">FORNECEDOR</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">NF</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">VALOR</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">STATUS</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">OBSERVAÇÃO</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${notasVisiveis.map((nota, index) => {
-                            const statusIcon = nota.status === 'Acatada' ? '✅' : nota.status === 'Devolvida' ? '🔄' : '⚠️';
-                            const statusColor = nota.status === 'Acatada' ? '#34C759' : nota.status === 'Devolvida' ? '#FF9500' : '#FF3B30';
+                            let statusIcon = '';
+                            let statusText = '';
+                            let statusColor = '';
+                            
+                            if (nota.status === 'Acatada') {
+                                statusIcon = '✅';
+                                statusText = 'Acatada';
+                                statusColor = '#34C759';
+                            } else if (nota.status === 'Devolvida') {
+                                statusIcon = '🔄';
+                                statusText = 'Devolvida';
+                                statusColor = '#FF9500';
+                            } else {
+                                statusIcon = '⚠️';
+                                statusText = 'Não Acatada';
+                                statusColor = '#FF3B30';
+                            }
+                            
                             const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
                             return `
                                 <tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
-                                    <td style="padding: 7px 4px; font-weight: 500;">${nota.data}</td>
-                                    <td style="padding: 7px 4px; font-weight: 600;">${nota.fornecedor}</td>
-                                    <td style="padding: 7px 4px; text-align: center; font-family: monospace; font-size: 9px;">${nota.nf}</td>
-                                    <td style="padding: 7px 4px; text-align: right; font-weight: 600;">${nota.valor}</td>
-                                    <td style="padding: 7px 4px; text-align: center; font-weight: 600; color: ${statusColor};">${statusIcon} ${nota.status}</td>
-                                    <td style="padding: 7px 4px; text-align: center;">${nota.temperatura}</td>
-                                    <td style="padding: 7px 4px; font-size: 9px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${nota.observacao}</td>
+                                    <td style="padding: 10px; text-align: center; font-weight: 500;">${nota.data}</td>
+                                    <td style="padding: 10px; text-align: left; font-weight: 600;">${nota.fornecedor}</td>
+                                    <td style="padding: 10px; text-align: center; font-family: monospace;">${nota.nf}</td>
+                                    <td style="padding: 10px; text-align: right; font-weight: 600;">${nota.valor}</td>
+                                    <td style="padding: 10px; text-align: center; font-weight: 600; color: ${statusColor}; white-space: nowrap;">${statusIcon} ${statusText}</td>
+                                    <td style="padding: 10px; text-align: left; font-size: 10px;">${nota.observacao}</td>
                                 </tr>
                             `;
                         }).join('')}
@@ -559,11 +573,11 @@ async function exportReport() {
                 `;
                 
                 modalTexto.innerHTML = `
-                    <div style="background: white; padding: 30px; border-radius: 20px; max-width: 600px; max-height: 80vh; overflow: auto;">
-                        <h3 style="margin: 0 0 20px 0;">📋 Mensagem de Texto (já copiada!)</h3>
-                        <textarea readonly style="width: 100%; height: 400px; padding: 15px; font-family: monospace; font-size: 13px; border: 1px solid #ddd; border-radius: 10px;">${mensagemTexto}</textarea>
+                    <div style="background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 18px;">📋 Mensagem de Texto (já copiada!)</h3>
+                        <textarea readonly style="width: 100%; flex: 1; min-height: 300px; max-height: calc(85vh - 150px); padding: 15px; font-family: monospace; font-size: 13px; border: 1px solid #ddd; border-radius: 10px; resize: none; box-sizing: border-box;">${mensagemTexto}</textarea>
                         <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #007AFF; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">Fechar</button>
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 12px 24px; background: #007AFF; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px;">Fechar</button>
                         </div>
                     </div>
                 `;
@@ -766,7 +780,8 @@ async function handleNFSubmit(e) {
             .eq('id', editingNFId);
         
         if (error) {
-            alert('Erro ao atualizar nota fiscal');
+            console.error('Erro detalhado ao atualizar:', error);
+            alert(`Erro ao atualizar nota fiscal: ${error.message || 'Erro desconhecido'}\n\nDetalhes: ${error.hint || ''}`);
             return;
         }
     } else {
