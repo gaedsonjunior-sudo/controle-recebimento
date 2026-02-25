@@ -302,7 +302,11 @@ function renderNotasFiscais(notas) {
             <td>${nota.hora_saida || '-'}</td>
             <td class="observacao-cell">${nota.observacao || '-'}</td>
             <td>
-                <span class="status-badge status-${nota.status === 'Acatada' ? 'acatada' : 'nao-acatada'}">
+                <span class="status-badge ${
+                    nota.status === 'Acatada' ? 'status-acatada' : 
+                    nota.status === 'Devolvida' ? 'status-devolvida' : 
+                    'status-nao-acatada'
+                }">
                     ${nota.status}
                 </span>
             </td>
@@ -378,6 +382,7 @@ async function exportReport() {
         let totalValor = 0;
         let countAcatada = 0;
         let countNaoAcatada = 0;
+        let countDevolvida = 0;
         
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
@@ -387,6 +392,7 @@ async function exportReport() {
             
             if (status === 'Não Acatada') countNaoAcatada++;
             if (status === 'Acatada') countAcatada++;
+            if (status === 'Devolvida') countDevolvida++;
             totalValor += valor;
             
             notasVisiveis.push({
@@ -394,88 +400,100 @@ async function exportReport() {
                 fornecedor: cells[1].textContent.trim(),
                 nf: cells[2].textContent.trim(),
                 valor: cells[3].textContent.trim(),
-                hora: cells[4].textContent.trim(),
                 temperatura: cells[5].textContent.trim(),
-                horaSaida: cells[6].textContent.trim(),
+                observacao: cells[7].textContent.trim(),
                 status: status
             });
         });
         
         const percentAcatada = Math.round((countAcatada / rows.length) * 100);
         const percentNaoAcatada = Math.round((countNaoAcatada / rows.length) * 100);
+        const percentDevolvida = Math.round((countDevolvida / rows.length) * 100);
         
-        // Criar container para o relatório
+        // GERAR MENSAGEM DE TEXTO
+        let mensagemTexto = `📦 *RELATÓRIO DE NOTAS FISCAIS*\n`;
+        mensagemTexto += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        mensagemTexto += `📅 ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}\n`;
+        mensagemTexto += `📊 ${rows.length} nota${rows.length > 1 ? 's' : ''}\n\n`;
+        
+        notasVisiveis.forEach((nota, index) => {
+            mensagemTexto += `*${index + 1}. ${nota.fornecedor}*\n`;
+            mensagemTexto += `   NF: ${nota.nf}\n`;
+            mensagemTexto += `   Valor: ${nota.valor}\n`;
+            mensagemTexto += `   Status: ${nota.status}\n`;
+            if (nota.observacao !== '-') {
+                mensagemTexto += `   Obs: ${nota.observacao}\n`;
+            }
+            mensagemTexto += `\n`;
+        });
+        
+        mensagemTexto += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        mensagemTexto += `📊 *RESUMO:*\n`;
+        if (countNaoAcatada > 0) mensagemTexto += `⚠️ ${countNaoAcatada} Não Acatada${countNaoAcatada > 1 ? 's' : ''}\n`;
+        if (countAcatada > 0) mensagemTexto += `✅ ${countAcatada} Acatada${countAcatada > 1 ? 's' : ''}\n`;
+        if (countDevolvida > 0) mensagemTexto += `🔄 ${countDevolvida} Devolvida${countDevolvida > 1 ? 's' : ''}\n`;
+        
+        // Copiar mensagem para clipboard
+        try {
+            await navigator.clipboard.writeText(mensagemTexto);
+            console.log('Mensagem copiada para área de transferência!');
+        } catch (err) {
+            console.log('Não foi possível copiar automaticamente');
+        }
+        
+        // Criar container para o relatório (IMAGEM)
         const reportContainer = document.createElement('div');
         reportContainer.style.cssText = `
             position: fixed;
             left: -9999px;
             top: 0;
             background: white;
-            padding: 40px;
+            padding: 30px 40px;
             width: 1100px;
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', monospace, sans-serif;
         `;
         
-        // HTML do relatório estilo executivo
+        // HTML do relatório estilo executivo (RESUMO COMPACTO)
         reportContainer.innerHTML = `
-            <div style="text-align: center; border-top: 4px solid #000; border-bottom: 4px solid #000; padding: 15px 0; margin-bottom: 25px;">
-                <h1 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px;">CONTROLE DE RECEBIMENTO</h1>
-                <h2 style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #666;">NOTAS FISCAIS - GPP</h2>
+            <div style="text-align: center; border-top: 4px solid #000; border-bottom: 4px solid #000; padding: 12px 0; margin-bottom: 20px;">
+                <h1 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 1px;">CONTROLE DE RECEBIMENTO - NOTAS FISCAIS</h1>
+                <h2 style="margin: 5px 0 0 0; font-size: 13px; font-weight: 600; color: #666;">${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} • ${rows.length} nota${rows.length > 1 ? 's' : ''}</h2>
             </div>
             
-            <div style="background: #f8f9fa; border-left: 4px solid #007AFF; padding: 20px; margin-bottom: 25px;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 700; color: #000;">📊 RESUMO</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px;">
-                    <div>
-                        <div style="color: #666; margin-bottom: 3px;">📅 Data do Relatório</div>
-                        <div style="font-weight: 600;">${new Date().toLocaleString('pt-BR')}</div>
-                    </div>
-                    <div>
-                        <div style="color: #666; margin-bottom: 3px;">📦 Total de Notas</div>
-                        <div style="font-weight: 600; font-size: 18px; color: #007AFF;">${rows.length}</div>
-                    </div>
-                    <div>
-                        <div style="color: #666; margin-bottom: 3px;">⚠️ Não Acatadas</div>
-                        <div style="font-weight: 600; color: #FF3B30;">${countNaoAcatada} (${percentNaoAcatada}%)</div>
-                    </div>
-                    <div>
-                        <div style="color: #666; margin-bottom: 3px;">✅ Acatadas</div>
-                        <div style="font-weight: 600; color: #34C759;">${countAcatada} (${percentAcatada}%)</div>
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                        <div style="color: #666; margin-bottom: 3px;">💰 Valor Total</div>
-                        <div style="font-weight: 700; font-size: 18px; color: #000;">R$ ${totalValor.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}</div>
-                    </div>
-                </div>
+            <div style="background: #f8f9fa; border-left: 4px solid #007AFF; padding: 12px 15px; margin-bottom: 20px; display: flex; gap: 30px; justify-content: space-around;">
+                ${countNaoAcatada > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #FF3B30;">${countNaoAcatada}</div><div style="font-size: 11px; color: #666;">Não Acatadas</div></div>` : ''}
+                ${countAcatada > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #34C759;">${countAcatada}</div><div style="font-size: 11px; color: #666;">Acatadas</div></div>` : ''}
+                ${countDevolvida > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #FF9500;">${countDevolvida}</div><div style="font-size: 11px; color: #666;">Devolvidas</div></div>` : ''}
+                <div style="text-align: center;"><div style="font-size: 20px; font-weight: 700; color: #000;">R$ ${totalValor.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}</div><div style="font-size: 11px; color: #666;">Valor Total</div></div>
             </div>
             
-            <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 10px 0; margin-bottom: 5px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 8px 0; margin-bottom: 5px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
                     <thead>
                         <tr style="background: #000; color: white;">
-                            <th style="padding: 8px 5px; text-align: left; font-weight: 600;">DATA</th>
-                            <th style="padding: 8px 5px; text-align: left; font-weight: 600;">HORA</th>
-                            <th style="padding: 8px 5px; text-align: left; font-weight: 600;">FORNECEDOR</th>
-                            <th style="padding: 8px 5px; text-align: center; font-weight: 600;">NF</th>
-                            <th style="padding: 8px 5px; text-align: right; font-weight: 600;">VALOR</th>
-                            <th style="padding: 8px 5px; text-align: center; font-weight: 600;">STATUS</th>
-                            <th style="padding: 8px 5px; text-align: center; font-weight: 600;">TEMP</th>
+                            <th style="padding: 7px 4px; text-align: left; font-weight: 600; width: 70px;">DATA</th>
+                            <th style="padding: 7px 4px; text-align: left; font-weight: 600;">FORNECEDOR</th>
+                            <th style="padding: 7px 4px; text-align: center; font-weight: 600; width: 90px;">NF</th>
+                            <th style="padding: 7px 4px; text-align: right; font-weight: 600; width: 90px;">VALOR</th>
+                            <th style="padding: 7px 4px; text-align: center; font-weight: 600; width: 80px;">STATUS</th>
+                            <th style="padding: 7px 4px; text-align: center; font-weight: 600; width: 45px;">TEMP</th>
+                            <th style="padding: 7px 4px; text-align: left; font-weight: 600;">OBSERVAÇÃO</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${notasVisiveis.map((nota, index) => {
-                            const statusIcon = nota.status === 'Acatada' ? '✅' : '⚠️';
-                            const statusText = nota.status === 'Acatada' ? 'SIM' : 'NÃO';
+                            const statusIcon = nota.status === 'Acatada' ? '✅' : nota.status === 'Devolvida' ? '🔄' : '⚠️';
+                            const statusColor = nota.status === 'Acatada' ? '#34C759' : nota.status === 'Devolvida' ? '#FF9500' : '#FF3B30';
                             const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
                             return `
                                 <tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
-                                    <td style="padding: 8px 5px; font-weight: 500;">${nota.data.split('/')[0]}/${nota.data.split('/')[1]}</td>
-                                    <td style="padding: 8px 5px;">${nota.hora}</td>
-                                    <td style="padding: 8px 5px; font-weight: 600;">${nota.fornecedor}</td>
-                                    <td style="padding: 8px 5px; text-align: center; font-family: monospace;">${nota.nf}</td>
-                                    <td style="padding: 8px 5px; text-align: right; font-weight: 600;">${nota.valor}</td>
-                                    <td style="padding: 8px 5px; text-align: center; font-weight: 600;">${statusIcon} ${statusText}</td>
-                                    <td style="padding: 8px 5px; text-align: center;">${nota.temperatura}</td>
+                                    <td style="padding: 7px 4px; font-weight: 500;">${nota.data}</td>
+                                    <td style="padding: 7px 4px; font-weight: 600;">${nota.fornecedor}</td>
+                                    <td style="padding: 7px 4px; text-align: center; font-family: monospace; font-size: 9px;">${nota.nf}</td>
+                                    <td style="padding: 7px 4px; text-align: right; font-weight: 600;">${nota.valor}</td>
+                                    <td style="padding: 7px 4px; text-align: center; font-weight: 600; color: ${statusColor};">${statusIcon} ${nota.status}</td>
+                                    <td style="padding: 7px 4px; text-align: center;">${nota.temperatura}</td>
+                                    <td style="padding: 7px 4px; font-size: 9px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${nota.observacao}</td>
                                 </tr>
                             `;
                         }).join('')}
@@ -485,10 +503,10 @@ async function exportReport() {
             
             <div style="border-top: 2px solid #000; padding-top: 5px;"></div>
             
-            ${countNaoAcatada > 0 ? `
-                <div style="background: #fff3cd; border-left: 4px solid #FF9500; padding: 15px; margin-top: 20px;">
-                    <div style="font-weight: 700; font-size: 13px; color: #856404;">
-                        ⚠️ AÇÃO NECESSÁRIA: ${countNaoAcatada} nota${countNaoAcatada > 1 ? 's' : ''} pendente${countNaoAcatada > 1 ? 's' : ''} de acatamento
+            ${countNaoAcatada > 0 || countDevolvida > 0 ? `
+                <div style="background: #fff3cd; border-left: 4px solid #FF9500; padding: 12px; margin-top: 15px;">
+                    <div style="font-weight: 700; font-size: 11px; color: #856404;">
+                        ⚠️ AÇÃO NECESSÁRIA: ${countNaoAcatada + countDevolvida} nota${countNaoAcatada + countDevolvida > 1 ? 's' : ''} pendente${countNaoAcatada + countDevolvida > 1 ? 's' : ''}
                     </div>
                 </div>
             ` : ''}
@@ -521,7 +539,37 @@ async function exportReport() {
             exportReportBtn.disabled = false;
             exportReportBtn.innerHTML = '<span class="btn-icon">📊</span> Exportar Relatório';
             
-            alert('Relatório exportado com sucesso! Verifique seus downloads.');
+            // Mostrar mensagem com opção de ver texto
+            const verTexto = confirm('✅ Relatório exportado!\n\n📋 A mensagem de texto foi copiada para a área de transferência.\n\nDeseja visualizar a mensagem?');
+            
+            if (verTexto) {
+                // Criar modal com a mensagem
+                const modalTexto = document.createElement('div');
+                modalTexto.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+                
+                modalTexto.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 20px; max-width: 600px; max-height: 80vh; overflow: auto;">
+                        <h3 style="margin: 0 0 20px 0;">📋 Mensagem de Texto (já copiada!)</h3>
+                        <textarea readonly style="width: 100%; height: 400px; padding: 15px; font-family: monospace; font-size: 13px; border: 1px solid #ddd; border-radius: 10px;">${mensagemTexto}</textarea>
+                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #007AFF; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">Fechar</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modalTexto);
+            }
         });
         
     } catch (error) {

@@ -668,6 +668,11 @@ body {
     color: var(--danger-color);
 }
 
+.status-devolvida {
+    background: rgba(255, 149, 0, 0.15);
+    color: #FF9500;
+}
+
 .actions-column {
     width: 120px;
 }
