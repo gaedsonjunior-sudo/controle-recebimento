@@ -411,7 +411,7 @@ async function exportReport() {
         const percentDevolvida = Math.round((countDevolvida / rows.length) * 100);
         
         // GERAR MENSAGEM DE TEXTO
-        let mensagemTexto = `📦 *RELATÓRIO DE NOTAS FISCAIS*\n`;
+        let mensagemTexto = `*RELATÓRIO DE NOTAS FISCAIS*\n`;
         mensagemTexto += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
         mensagemTexto += `📅 ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}\n`;
         mensagemTexto += `📊 ${rows.length} nota${rows.length > 1 ? 's' : ''}\n\n`;
