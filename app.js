@@ -1,7 +1,7 @@
 // =================================================================
 // SISTEMA DE GERENCIAMENTO DE NOTAS FISCAIS
-// Mantém 100% da funcionalidade original
-// NOVO DESIGN: Apenas melhorias visuais e UX
+// Versão corrigida - mantém 100% da funcionalidade original
+// Apenas melhorias visuais
 // =================================================================
 
 // Estado global
@@ -13,7 +13,7 @@ let sortDirection = 'asc';
 let deleteNFId = null;
 
 // =================================================================
-// AUTENTICAÇÃO
+// AUTENTICAÇÃO - CORRIGIDA
 // =================================================================
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -24,15 +24,17 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const errorDiv = document.getElementById('loginError');
     const submitBtn = e.target.querySelector('button[type="submit"]');
     
-    // NOVO DESIGN: Loading state
+    // Loading state
     submitBtn.disabled = true;
-    submitBtn.querySelector('.btn-text').style.display = 'none';
-    submitBtn.querySelector('.btn-loading').style.display = 'inline-flex';
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoading = submitBtn.querySelector('.btn-loading');
+    if (btnText) btnText.style.display = 'none';
+    if (btnLoading) btnLoading.style.display = 'inline-flex';
     
     errorDiv.textContent = '';
     
     try {
-        // Buscar usuário na tabela usuarios pelo username para pegar o email
+        // Buscar usuário na tabela usuarios pelo username
         const { data: usuarios, error: userError } = await window.supabaseClient
             .from('usuarios')
             .select('*')
@@ -44,42 +46,37 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         
         const user = usuarios[0];
         
-        // Autenticar usando Supabase Auth com o email do usuário
+        // Autenticar usando Supabase Auth
         const { data: authData, error: authError } = await window.supabaseClient.auth.signInWithPassword({
             email: user.email,
             password: password
         });
         
         if (authError) {
-            console.error('Erro de autenticação:', authError);
             throw new Error('Senha incorreta');
         }
         
         // Salvar dados do usuário
         currentUser = user;
         
-        // Transição suave para tela principal
-        setTimeout(() => {
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainScreen').classList.add('active');
-            
-            // NOVO DESIGN: Atualizar UI do usuário
-            updateUserUI();
-            loadNotas();
-        }, 300);
+        // Transição para tela principal
+        document.getElementById('loginScreen').classList.remove('active');
+        document.getElementById('mainScreen').classList.add('active');
+        
+        updateUserUI();
+        loadNotas();
         
     } catch (error) {
         console.error('Erro no login:', error);
         errorDiv.textContent = error.message || 'Usuário ou senha incorretos';
         
-        // Reset button state
+        // Reset button
         submitBtn.disabled = false;
-        submitBtn.querySelector('.btn-text').style.display = 'inline';
-        submitBtn.querySelector('.btn-loading').style.display = 'none';
+        if (btnText) btnText.style.display = 'inline';
+        if (btnLoading) btnLoading.style.display = 'none';
     }
 });
 
-// NOVO DESIGN: Função para atualizar UI do usuário
 function updateUserUI() {
     const userName = currentUser.nome || currentUser.username;
     const userRole = currentUser.role === 'admin' ? 'Administrador' : 'Fiscal';
@@ -87,7 +84,7 @@ function updateUserUI() {
     document.getElementById('currentUserName').textContent = userName;
     document.getElementById('currentUserRole').textContent = userRole;
     
-    // NOVO DESIGN: Criar iniciais para avatar
+    // Criar iniciais para avatar
     const initials = userName
         .split(' ')
         .map(n => n[0])
@@ -108,9 +105,7 @@ function updateUserUI() {
 
 // Logout
 document.getElementById('logoutBtn').addEventListener('click', async () => {
-    // Fazer logout no Supabase Auth
     await window.supabaseClient.auth.signOut();
-    
     currentUser = null;
     document.getElementById('mainScreen').classList.remove('active');
     document.getElementById('loginScreen').classList.add('active');
@@ -154,7 +149,7 @@ function applyFilters() {
     
     if (nf) {
         filtered = filtered.filter(n => 
-            n.numero_nf.toLowerCase().includes(nf)
+            String(n.numero_nf).toLowerCase().includes(nf)
         );
     }
     
@@ -170,7 +165,7 @@ function applyFilters() {
 }
 
 // =================================================================
-// RENDERIZAR TABELA
+// RENDERIZAR TABELA - CORRIGIDA COM EVENT DELEGATION
 // =================================================================
 
 function renderTable(notas) {
@@ -178,7 +173,6 @@ function renderTable(notas) {
     const emptyState = document.getElementById('emptyState');
     const totalEl = document.getElementById('totalNotas');
     
-    // NOVO DESIGN: Atualizar badge com contador
     totalEl.textContent = `${notas.length} nota${notas.length !== 1 ? 's' : ''}`;
     
     if (notas.length === 0) {
@@ -190,7 +184,6 @@ function renderTable(notas) {
     emptyState.classList.remove('active');
     
     tbody.innerHTML = notas.map(nota => {
-        // NOVO DESIGN: Status badge colorido
         const statusClass = nota.status === 'Acatada' ? 'status-acatada' : 
                           nota.status === 'Devolvida' ? 'status-devolvida' : 
                           'status-nao-acatada';
@@ -204,18 +197,18 @@ function renderTable(notas) {
                 <td>${nota.hora_chegada}</td>
                 <td>${nota.temperatura || '-'}</td>
                 <td>${nota.hora_saida || '-'}</td>
-                <td>${nota.observacao || '-'}</td>
+                <td class="observacao-cell">${nota.observacao || '-'}</td>
                 <td><span class="status-badge ${statusClass}">${nota.status}</span></td>
                 <td class="actions-column">
                     <div class="action-buttons">
-                        <button class="action-btn edit" onclick="editNota(${nota.id})" title="Editar">
+                        <button class="action-btn edit" data-id="${nota.id}" title="Editar">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke-width="2"/>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-width="2"/>
                             </svg>
                         </button>
                         ${currentUser.role === 'admin' ? `
-                            <button class="action-btn delete" onclick="confirmDelete(${nota.id})" title="Excluir">
+                            <button class="action-btn delete" data-id="${nota.id}" title="Excluir">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <polyline points="3 6 5 6 21 6" stroke-width="2"/>
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-width="2"/>
@@ -227,6 +220,27 @@ function renderTable(notas) {
             </tr>
         `;
     }).join('');
+    
+    // Event delegation para botões
+    attachTableEventListeners();
+}
+
+function attachTableEventListeners() {
+    const tbody = document.getElementById('notasTableBody');
+    
+    tbody.querySelectorAll('.action-btn.edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            editNota(id);
+        });
+    });
+    
+    tbody.querySelectorAll('.action-btn.delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            confirmDelete(id);
+        });
+    });
 }
 
 // =================================================================
@@ -241,7 +255,6 @@ function formatDate(dateStr) {
 
 function formatNF(nf) {
     if (!nf) return '-';
-    // Garantir que é string
     const nfStr = String(nf);
     const clean = nfStr.replace(/\D/g, '');
     if (clean.length === 9) {
@@ -272,7 +285,6 @@ document.querySelectorAll('.sortable').forEach(th => {
             sortDirection = 'asc';
         }
         
-        // NOVO DESIGN: Atualizar classes de ordenação
         document.querySelectorAll('.sortable').forEach(t => {
             t.classList.remove('sorted', 'asc', 'desc');
         });
@@ -285,17 +297,15 @@ document.querySelectorAll('.sortable').forEach(th => {
 function sortTable() {
     let filtered = [...allNotas];
     
-    // Aplicar filtros primeiro
     const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
     const nf = document.getElementById('filterNF').value.toLowerCase();
     const status = document.getElementById('filterStatus').value;
     
     if (fornecedor) filtered = filtered.filter(n => n.fornecedor.toLowerCase().includes(fornecedor));
-    if (nf) filtered = filtered.filter(n => n.numero_nf.toLowerCase().includes(nf));
+    if (nf) filtered = filtered.filter(n => String(n.numero_nf).toLowerCase().includes(nf));
     if (selectedDates.length > 0) filtered = filtered.filter(n => selectedDates.includes(n.data));
     if (status) filtered = filtered.filter(n => n.status === status);
     
-    // Ordenar
     if (sortColumn) {
         filtered.sort((a, b) => {
             let aVal = a[sortColumn] || '';
@@ -363,22 +373,20 @@ function updateSelectedDatesDisplay() {
     
     input.value = `${selectedDates.length} data(s) selecionada(s)`;
     
-    display.innerHTML = selectedDates.map(date => `
-        <span class="date-tag">
-            ${formatDate(date)}
-            <button type="button" onclick="removeDate('${date}')">×</button>
-        </span>
-    `).join('');
+    display.innerHTML = selectedDates.map(date => {
+        return `<span class="date-tag">${formatDate(date)}<button type="button" class="remove-date-btn" data-date="${date}">×</button></span>`;
+    }).join('');
+    
+    // Event listeners para remover datas
+    display.querySelectorAll('.remove-date-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const date = btn.getAttribute('data-date');
+            selectedDates = selectedDates.filter(d => d !== date);
+            updateSelectedDatesDisplay();
+            applyFilters();
+        });
+    });
 }
-
-function removeDate(date) {
-    selectedDates = selectedDates.filter(d => d !== date);
-    updateSelectedDatesDisplay();
-    applyFilters();
-}
-
-// Expor função globalmente para uso no onclick
-window.removeDate = removeDate;
 
 // =================================================================
 // MODAL NOVA/EDITAR NOTA
@@ -388,18 +396,19 @@ const modal = document.getElementById('nfModal');
 const closeModalBtn = document.getElementById('closeModal');
 const cancelBtn = document.getElementById('cancelBtn');
 
-// NOVO DESIGN: FAB Mobile também abre modal
 document.getElementById('newNFBtn').addEventListener('click', openNewNFModal);
-document.querySelector('.fab-mobile')?.addEventListener('click', openNewNFModal);
+
+// FAB Mobile
+const fabMobile = document.querySelector('.fab-mobile');
+if (fabMobile) {
+    fabMobile.addEventListener('click', openNewNFModal);
+}
 
 function openNewNFModal() {
     document.getElementById('modalTitle').textContent = 'Nova Nota Fiscal';
     document.getElementById('nfForm').reset();
     document.getElementById('nfId').value = '';
-    
-    // Preencher data atual
     document.getElementById('nfData').valueAsDate = new Date();
-    
     modal.classList.add('active');
 }
 
@@ -412,7 +421,6 @@ modal.addEventListener('click', (e) => {
     }
 });
 
-// Editar nota
 function editNota(id) {
     const nota = allNotas.find(n => n.id === id);
     if (!nota) return;
@@ -435,19 +443,17 @@ function editNota(id) {
     modal.classList.add('active');
 }
 
-// Expor função globalmente para uso no onclick
-window.editNota = editNota;
-
 // Salvar nota
 document.getElementById('nfForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    
-    // NOVO DESIGN: Loading state
     submitBtn.disabled = true;
-    submitBtn.querySelector('.btn-text').style.display = 'none';
-    submitBtn.querySelector('.btn-loading').style.display = 'inline-flex';
+    
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoading = submitBtn.querySelector('.btn-loading');
+    if (btnText) btnText.style.display = 'none';
+    if (btnLoading) btnLoading.style.display = 'inline-flex';
     
     const id = document.getElementById('nfId').value;
     const valorStr = document.getElementById('nfValor').value;
@@ -493,10 +499,9 @@ document.getElementById('nfForm').addEventListener('submit', async (e) => {
         console.error('Erro ao salvar nota:', error);
         alert('Erro ao salvar nota fiscal');
     } finally {
-        // Reset button state
         submitBtn.disabled = false;
-        submitBtn.querySelector('.btn-text').style.display = 'inline';
-        submitBtn.querySelector('.btn-loading').style.display = 'none';
+        if (btnText) btnText.style.display = 'inline';
+        if (btnLoading) btnLoading.style.display = 'none';
     }
 });
 
@@ -529,9 +534,6 @@ function confirmDelete(id) {
     deleteNFId = id;
     confirmModal.classList.add('active');
 }
-
-// Expor função globalmente para uso no onclick
-window.confirmDelete = confirmDelete;
 
 closeConfirmBtn.addEventListener('click', () => {
     confirmModal.classList.remove('active');
@@ -570,8 +572,6 @@ confirmDeleteBtn.addEventListener('click', async () => {
 
 document.getElementById('exportReportBtn').addEventListener('click', async () => {
     const btn = document.getElementById('exportReportBtn');
-    
-    // NOVO DESIGN: Feedback visual
     btn.disabled = true;
     btn.classList.add('loading');
     
@@ -599,7 +599,6 @@ async function exportReport() {
         link.download = `relatorio_notas_${new Date().toISOString().split('T')[0]}.png`;
         link.click();
         
-        // Gerar mensagem WhatsApp
         const notas = Array.from(document.querySelectorAll('#notasTableBody tr'));
         let message = `📊 *Relatório de Notas Fiscais*\n`;
         message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
@@ -623,3 +622,28 @@ async function exportReport() {
         alert('Erro ao gerar relatório');
     }
 }
+
+// =================================================================
+// VERIFICAR SESSÃO AO CARREGAR
+// =================================================================
+
+window.addEventListener('load', async () => {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    
+    if (session) {
+        // Já está logado, buscar dados do usuário
+        const { data: usuarios } = await window.supabaseClient
+            .from('usuarios')
+            .select('*')
+            .eq('email', session.user.email)
+            .single();
+        
+        if (usuarios) {
+            currentUser = usuarios;
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainScreen').classList.add('active');
+            updateUserUI();
+            loadNotas();
+        }
+    }
+});

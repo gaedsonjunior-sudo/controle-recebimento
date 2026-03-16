@@ -828,7 +828,18 @@ body {
     padding: 16px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
+}
+
+/* Células que não devem quebrar linha */
+.notas-table td:not(.observacao-cell) {
     white-space: nowrap;
+}
+
+/* Observação pode quebrar */
+.observacao-cell {
+    max-width: 200px;
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 /* NOVO DESIGN: Status badges coloridos */
