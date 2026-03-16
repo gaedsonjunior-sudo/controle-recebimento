@@ -1,367 +1,1009 @@
-// =================================================================
-// SISTEMA DE GERENCIAMENTO DE NOTAS FISCAIS
-// Versão corrigida - mantém 100% da funcionalidade original
-// Apenas melhorias visuais
-// =================================================================
-
-// Estado global
+// Estado da aplicação
 let currentUser = null;
-let allNotas = [];
-let selectedDates = [];
-let sortColumn = null;
-let sortDirection = 'asc';
+let isAdmin = false;
+let notasFiscais = [];
+let editingNFId = null;
 let deleteNFId = null;
 
-// =================================================================
-// AUTENTICAÇÃO - CORRIGIDA
-// =================================================================
+// Controle de ordenação
+let currentSortColumn = 'data';
+let currentSortDirection = 'desc'; // desc = mais recente primeiro
+let sortHistory = []; // Histórico de ordenações para ordenação multi-nível
 
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+// Variável para o cliente Supabase (será preenchida após carregamento)
+let supabaseClient = null;
+
+// Elementos do DOM
+const loginScreen = document.getElementById('loginScreen');
+const mainScreen = document.getElementById('mainScreen');
+const loginForm = document.getElementById('loginForm');
+const loginError = document.getElementById('loginError');
+const logoutBtn = document.getElementById('logoutBtn');
+const currentUserName = document.getElementById('currentUserName');
+const currentUserRole = document.getElementById('currentUserRole');
+const newNFBtn = document.getElementById('newNFBtn');
+const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+const exportReportBtn = document.getElementById('exportReportBtn');
+const filtersWrapper = document.getElementById('filtersWrapper');
+const nfModal = document.getElementById('nfModal');
+const confirmModal = document.getElementById('confirmModal');
+const nfForm = document.getElementById('nfForm');
+const notasTableBody = document.getElementById('notasTableBody');
+const emptyState = document.getElementById('emptyState');
+const totalNotas = document.getElementById('totalNotas');
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    // Aguardar config.js carregar
+    setTimeout(() => {
+        // Pegar cliente do window
+        supabaseClient = window.supabaseClient;
+        
+        // Verificar se o Supabase foi inicializado
+        if (!supabaseClient) {
+            console.error('❌ Supabase não inicializado');
+            showConfigError();
+            return;
+        }
+        
+        console.log('✅ Supabase carregado com sucesso!');
+        checkAuth();
+        setupEventListeners();
+    }, 500);
+});
+
+// Mostrar erro de configuração
+function showConfigError() {
+    if (loginError) {
+        loginError.innerHTML = `
+            <strong>⚠️ Erro ao Conectar com Supabase</strong><br>
+            Verifique se as credenciais estão corretas no arquivo <code>config.js</code><br>
+            <small>Abra o Console (F12) para mais detalhes do erro.</small>
+        `;
+        loginError.classList.add('show');
+        loginError.style.background = '#fee2e2';
+        loginError.style.border = '2px solid #ef4444';
+        loginError.style.padding = '16px';
+        loginError.style.borderRadius = '8px';
+    }
+}
+
+// Verificar autenticação
+async function checkAuth() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    if (session) {
+        await loadUserData(session.user);
+        showMainScreen();
+    } else {
+        showLoginScreen();
+    }
+}
+
+// Carregar dados do usuário
+async function loadUserData(user) {
+    const { data, error } = await supabaseClient
+        .from('usuarios')
+        .select('*')
+        .eq('email', user.email)
+        .single();
+    
+    if (data) {
+        currentUser = data;
+        isAdmin = data.role === 'admin';
+        currentUserName.textContent = data.nome;
+        currentUserRole.textContent = isAdmin ? 'Administrador' : 'Fiscal';
+    }
+}
+
+// Event Listeners
+function setupEventListeners() {
+    // Login
+    loginForm.addEventListener('submit', handleLogin);
+    
+    // Logout
+    logoutBtn.addEventListener('click', handleLogout);
+    
+    // Nova NF
+    newNFBtn.addEventListener('click', openNewNFModal);
+    
+    // Toggle Filtros
+    toggleFiltersBtn.addEventListener('click', toggleFilters);
+    
+    // Exportar Relatório
+    exportReportBtn.addEventListener('click', exportReport);
+    
+    // Fechar modals
+    document.getElementById('closeModal').addEventListener('click', closeNFModal);
+    document.getElementById('cancelBtn').addEventListener('click', closeNFModal);
+    document.getElementById('closeConfirmModal').addEventListener('click', closeConfirmModal);
+    document.getElementById('cancelDeleteBtn').addEventListener('click', closeConfirmModal);
+    
+    // Confirmar delete
+    document.getElementById('confirmDeleteBtn').addEventListener('click', deleteNotaFiscal);
+    
+    // Submit form NF
+    nfForm.addEventListener('submit', handleNFSubmit);
+    
+    // Filtros
+    document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
+    document.getElementById('filterNF').addEventListener('input', applyFilters);
+    document.getElementById('openDatePicker').addEventListener('click', openDatePicker);
+    document.getElementById('datePickerHelper').addEventListener('change', handleDateSelection);
+    document.getElementById('filterStatus').addEventListener('change', applyFilters);
+    document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+    
+    // Formatação de valores
+    document.getElementById('nfValor').addEventListener('input', formatCurrency);
+    document.getElementById('nfNumero').addEventListener('input', formatNF);
+    
+    // Fechar modal clicando fora
+    nfModal.addEventListener('click', (e) => {
+        if (e.target === nfModal) closeNFModal();
+    });
+    confirmModal.addEventListener('click', (e) => {
+        if (e.target === confirmModal) closeConfirmModal();
+    });
+}
+
+// Setup listeners de ordenação (chamado após carregar dados)
+function setupSortListeners() {
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.dataset.column;
+            handleSort(column);
+        });
+    });
+}
+
+// Login
+async function handleLogin(e) {
     e.preventDefault();
     
-    const username = document.getElementById('username').value.trim();
+    const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('loginError');
-    const submitBtn = e.target.querySelector('button[type="submit"]');
     
-    // Loading state
-    submitBtn.disabled = true;
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoading = submitBtn.querySelector('.btn-loading');
-    if (btnText) btnText.style.display = 'none';
-    if (btnLoading) btnLoading.style.display = 'inline-flex';
-    
-    errorDiv.textContent = '';
+    loginError.textContent = '';
+    loginError.classList.remove('show');
     
     try {
-        // Buscar usuário na tabela usuarios pelo username
-        const { data: usuarios, error: userError } = await window.supabaseClient
+        // Primeiro, buscar o email do usuário pelo username
+        const { data: usuarios, error: searchError } = await supabaseClient
             .from('usuarios')
-            .select('*')
+            .select('email')
             .eq('username', username);
         
-        if (userError || !usuarios || usuarios.length === 0) {
+        if (searchError) {
+            console.error('Erro ao buscar usuário:', searchError);
+            throw new Error('Erro ao conectar com o banco de dados');
+        }
+        
+        if (!usuarios || usuarios.length === 0) {
             throw new Error('Usuário não encontrado');
         }
         
-        const user = usuarios[0];
+        const userEmail = usuarios[0].email;
         
-        // Autenticar usando Supabase Auth
-        const { data: authData, error: authError } = await window.supabaseClient.auth.signInWithPassword({
-            email: user.email,
+        // Fazer login com Supabase Auth usando o email
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+            email: userEmail,
             password: password
         });
         
         if (authError) {
+            console.error('Erro de autenticação:', authError);
             throw new Error('Senha incorreta');
         }
         
-        // Salvar dados do usuário
-        currentUser = user;
+        // Buscar dados completos do usuário após login bem-sucedido
+        const { data: userData, error: userError } = await supabaseClient
+            .from('usuarios')
+            .select('*')
+            .eq('email', userEmail)
+            .single();
         
-        // Transição para tela principal
-        document.getElementById('loginScreen').classList.remove('active');
-        document.getElementById('mainScreen').classList.add('active');
+        if (userError || !userData) {
+            throw new Error('Erro ao carregar dados do usuário');
+        }
         
-        updateUserUI();
-        loadNotas();
+        currentUser = userData;
+        isAdmin = userData.role === 'admin';
+        
+        console.log('✅ Login realizado com sucesso!');
+        console.log('Usuário:', currentUser.nome);
+        console.log('Role:', currentUser.role);
+        
+        showMainScreen();
+        loadNotasFiscais();
         
     } catch (error) {
         console.error('Erro no login:', error);
-        errorDiv.textContent = error.message || 'Usuário ou senha incorretos';
-        
-        // Reset button
-        submitBtn.disabled = false;
-        if (btnText) btnText.style.display = 'inline';
-        if (btnLoading) btnLoading.style.display = 'none';
-    }
-});
-
-function updateUserUI() {
-    const userName = currentUser.nome || currentUser.username;
-    const userRole = currentUser.role === 'admin' ? 'Administrador' : 'Fiscal';
-    
-    document.getElementById('currentUserName').textContent = userName;
-    document.getElementById('currentUserRole').textContent = userRole;
-    
-    // Criar iniciais para avatar
-    const initials = userName
-        .split(' ')
-        .map(n => n[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
-    
-    const avatarEl = document.getElementById('userInitials');
-    if (avatarEl) {
-        avatarEl.textContent = initials;
-    }
-    
-    // Mostrar campo status apenas para admin
-    if (currentUser.role === 'admin') {
-        document.getElementById('statusGroup').style.display = 'block';
+        loginError.textContent = error.message || 'Erro ao fazer login';
+        loginError.classList.add('show');
     }
 }
 
 // Logout
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-    await window.supabaseClient.auth.signOut();
+async function handleLogout() {
+    await supabaseClient.auth.signOut();
     currentUser = null;
-    document.getElementById('mainScreen').classList.remove('active');
-    document.getElementById('loginScreen').classList.add('active');
-    document.getElementById('loginForm').reset();
-});
+    isAdmin = false;
+    showLoginScreen();
+    loginForm.reset();
+}
 
-// =================================================================
-// CARREGAR E FILTRAR NOTAS
-// =================================================================
+// Mostrar telas
+function showLoginScreen() {
+    loginScreen.classList.add('active');
+    loginScreen.style.display = 'flex';
+    mainScreen.classList.remove('active');
+    mainScreen.style.display = 'none';
+}
 
-async function loadNotas() {
-    try {
-        const { data, error } = await window.supabaseClient
-            .from('notas_fiscais')
-            .select('*')
-            .order('data', { ascending: false });
-        
-        if (error) throw error;
-        
-        allNotas = data || [];
-        applyFilters();
-        
-    } catch (error) {
+function showMainScreen() {
+    loginScreen.classList.remove('active');
+    loginScreen.style.display = 'none';
+    mainScreen.classList.add('active');
+    mainScreen.style.display = 'block';
+    currentUserName.textContent = currentUser.nome;
+    currentUserRole.textContent = isAdmin ? 'Administrador' : 'Fiscal';
+    loadNotasFiscais();
+}
+
+// Carregar Notas Fiscais
+async function loadNotasFiscais() {
+    const { data, error } = await supabaseClient
+        .from('notas_fiscais')
+        .select('*');
+    
+    if (error) {
         console.error('Erro ao carregar notas:', error);
-        alert('Erro ao carregar notas fiscais');
-    }
-}
-
-function applyFilters() {
-    let filtered = [...allNotas];
-    
-    const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
-    const nf = document.getElementById('filterNF').value.toLowerCase();
-    const status = document.getElementById('filterStatus').value;
-    
-    if (fornecedor) {
-        filtered = filtered.filter(n => 
-            n.fornecedor.toLowerCase().includes(fornecedor)
-        );
-    }
-    
-    if (nf) {
-        filtered = filtered.filter(n => 
-            String(n.numero_nf).toLowerCase().includes(nf)
-        );
-    }
-    
-    if (selectedDates.length > 0) {
-        filtered = filtered.filter(n => selectedDates.includes(n.data));
-    }
-    
-    if (status) {
-        filtered = filtered.filter(n => n.status === status);
-    }
-    
-    renderTable(filtered);
-}
-
-// =================================================================
-// RENDERIZAR TABELA - CORRIGIDA COM EVENT DELEGATION
-// =================================================================
-
-function renderTable(notas) {
-    const tbody = document.getElementById('notasTableBody');
-    const emptyState = document.getElementById('emptyState');
-    const totalEl = document.getElementById('totalNotas');
-    
-    totalEl.textContent = `${notas.length} nota${notas.length !== 1 ? 's' : ''}`;
-    
-    if (notas.length === 0) {
-        tbody.innerHTML = '';
-        emptyState.classList.add('active');
         return;
     }
     
-    emptyState.classList.remove('active');
+    notasFiscais = data || [];
     
-    tbody.innerHTML = notas.map(nota => {
-        const statusClass = nota.status === 'Acatada' ? 'status-acatada' : 
-                          nota.status === 'Devolvida' ? 'status-devolvida' : 
-                          'status-nao-acatada';
-        
-        return `
-            <tr>
-                <td>${formatDate(nota.data)}</td>
-                <td>${nota.fornecedor}</td>
-                <td>${formatNF(nota.numero_nf)}</td>
-                <td>${formatCurrency(nota.valor)}</td>
-                <td>${nota.hora_chegada}</td>
-                <td>${nota.temperatura || '-'}</td>
-                <td>${nota.hora_saida || '-'}</td>
-                <td class="observacao-cell">${nota.observacao || '-'}</td>
-                <td><span class="status-badge ${statusClass}">${nota.status}</span></td>
-                <td class="actions-column">
-                    <div class="action-buttons">
-                        <button class="action-btn edit" data-id="${nota.id}" title="Editar">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke-width="2"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-width="2"/>
-                            </svg>
-                        </button>
-                        ${currentUser.role === 'admin' ? `
-                            <button class="action-btn delete" data-id="${nota.id}" title="Excluir">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <polyline points="3 6 5 6 21 6" stroke-width="2"/>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-width="2"/>
-                                </svg>
-                            </button>
-                        ` : ''}
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
+    // Aplicar ordenação padrão (data desc)
+    const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
+    renderNotasFiscais(sorted);
     
-    // Event delegation para botões
-    attachTableEventListeners();
-}
-
-function attachTableEventListeners() {
-    const tbody = document.getElementById('notasTableBody');
-    
-    tbody.querySelectorAll('.action-btn.edit').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            editNota(id);
-        });
-    });
-    
-    tbody.querySelectorAll('.action-btn.delete').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            confirmDelete(id);
-        });
-    });
-}
-
-// =================================================================
-// FORMATAÇÃO
-// =================================================================
-
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    const [year, month, day] = dateStr.split('-');
-    return `${day}/${month}/${year}`;
-}
-
-function formatNF(nf) {
-    if (!nf) return '-';
-    const nfStr = String(nf);
-    const clean = nfStr.replace(/\D/g, '');
-    if (clean.length === 9) {
-        return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6)}`;
+    // Atualizar indicador visual
+    const defaultHeader = document.querySelector(`[data-column="${currentSortColumn}"]`);
+    if (defaultHeader) {
+        defaultHeader.classList.add(`sort-${currentSortDirection}`);
     }
-    return nfStr;
+    
+    // Configurar listeners de ordenação após renderizar tabela
+    setupSortListeners();
 }
 
-function formatCurrency(value) {
-    if (!value || isNaN(value)) return 'R$ 0,00';
-    const num = parseFloat(value);
-    if (isNaN(num)) return 'R$ 0,00';
-    return `R$ ${num.toFixed(2).replace('.', ',')}`;
+// Renderizar Notas Fiscais
+function renderNotasFiscais(notas) {
+    notasTableBody.innerHTML = '';
+    
+    if (notas.length === 0) {
+        emptyState.classList.add('show');
+        totalNotas.textContent = '0 notas';
+        return;
+    }
+    
+    emptyState.classList.remove('show');
+    totalNotas.textContent = `${notas.length} nota${notas.length !== 1 ? 's' : ''}`;
+    
+    notas.forEach(nota => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${formatDate(nota.data)}</td>
+            <td>${nota.fornecedor}</td>
+            <td>${formatNFNumber(nota.numero_nf)}</td>
+            <td>${formatCurrencyDisplay(nota.valor)}</td>
+            <td>${nota.hora_chegada}</td>
+            <td>${nota.temperatura || '-'}</td>
+            <td>${nota.hora_saida || '-'}</td>
+            <td class="observacao-cell">${nota.observacao || '-'}</td>
+            <td>
+                <span class="status-badge ${
+                    nota.status === 'Acatada' ? 'status-acatada' : 
+                    nota.status === 'Devolvida' ? 'status-devolvida' : 
+                    'status-nao-acatada'
+                }">
+                    ${nota.status}
+                </span>
+            </td>
+            <td class="actions-column">
+                <div class="action-buttons">
+                    <button class="action-btn btn-edit" onclick="editNotaFiscal('${nota.id}')">Editar</button>
+                    ${isAdmin ? `<button class="action-btn btn-delete" onclick="confirmDelete('${nota.id}')">Excluir</button>` : ''}
+                </div>
+            </td>
+        `;
+        notasTableBody.appendChild(tr);
+    });
 }
 
-// =================================================================
-// ORDENAÇÃO
-// =================================================================
+// Abrir modal Nova NF
+function openNewNFModal() {
+    editingNFId = null;
+    document.getElementById('modalTitle').textContent = 'Nova Nota Fiscal';
+    document.getElementById('nfId').value = '';
+    nfForm.reset();
+    
+    // Setar data e hora atual
+    const now = new Date();
+    document.getElementById('nfData').value = now.toISOString().split('T')[0];
+    document.getElementById('nfHoraChegada').value = now.toTimeString().slice(0, 5);
+    
+    // Esconder campo status para fiscais
+    if (!isAdmin) {
+        document.getElementById('statusGroup').style.display = 'none';
+    } else {
+        document.getElementById('statusGroup').style.display = 'block';
+    }
+    
+    nfModal.classList.add('active');
+}
 
-document.querySelectorAll('.sortable').forEach(th => {
-    th.addEventListener('click', () => {
-        const column = th.dataset.column;
+// Toggle Filtros
+function toggleFilters() {
+    filtersWrapper.classList.toggle('show');
+    
+    // Atualizar texto do botão
+    if (filtersWrapper.classList.contains('show')) {
+        toggleFiltersBtn.innerHTML = '<span class="btn-icon">🔍</span> Ocultar Filtros';
+    } else {
+        toggleFiltersBtn.innerHTML = '<span class="btn-icon">🔍</span> Filtros';
+    }
+}
+
+// Exportar Relatório
+async function exportReport() {
+    try {
+        // Pegar apenas as linhas visíveis da tabela
+        const tableContainer = document.querySelector('.table-container');
         
-        if (sortColumn === column) {
-            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            sortColumn = column;
-            sortDirection = 'asc';
+        if (!tableContainer) {
+            alert('Nenhuma tabela encontrada!');
+            return;
         }
         
-        document.querySelectorAll('.sortable').forEach(t => {
-            t.classList.remove('sorted', 'asc', 'desc');
-        });
-        th.classList.add('sorted', sortDirection);
+        // Verificar se há notas para exportar
+        const rows = document.querySelectorAll('#notasTableBody tr');
+        if (rows.length === 0) {
+            alert('Nenhuma nota para exportar! Aplique filtros ou adicione notas.');
+            return;
+        }
         
-        sortTable();
-    });
-});
-
-function sortTable() {
-    let filtered = [...allNotas];
-    
-    const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
-    const nf = document.getElementById('filterNF').value.toLowerCase();
-    const status = document.getElementById('filterStatus').value;
-    
-    if (fornecedor) filtered = filtered.filter(n => n.fornecedor.toLowerCase().includes(fornecedor));
-    if (nf) filtered = filtered.filter(n => String(n.numero_nf).toLowerCase().includes(nf));
-    if (selectedDates.length > 0) filtered = filtered.filter(n => selectedDates.includes(n.data));
-    if (status) filtered = filtered.filter(n => n.status === status);
-    
-    if (sortColumn) {
-        filtered.sort((a, b) => {
-            let aVal = a[sortColumn] || '';
-            let bVal = b[sortColumn] || '';
+        // Mostrar loading
+        exportReportBtn.disabled = true;
+        exportReportBtn.innerHTML = '<span class="btn-icon">⏳</span> Gerando...';
+        
+        // Coletar dados das notas visíveis
+        const notasVisiveis = [];
+        let totalValor = 0;
+        let countAcatada = 0;
+        let countNaoAcatada = 0;
+        let countDevolvida = 0;
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const status = cells[8].textContent.trim();
+            const valorText = cells[3].textContent.replace('R$', '').replace(/\./g, '').replace(',', '.');
+            const valor = parseFloat(valorText);
             
-            if (sortColumn === 'valor') {
-                aVal = parseFloat(aVal) || 0;
-                bVal = parseFloat(bVal) || 0;
-            }
+            if (status === 'Não Acatada') countNaoAcatada++;
+            if (status === 'Acatada') countAcatada++;
+            if (status === 'Devolvida') countDevolvida++;
+            totalValor += valor;
             
-            if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-            return 0;
+            notasVisiveis.push({
+                data: cells[0].textContent.trim(),
+                fornecedor: cells[1].textContent.trim(),
+                nf: cells[2].textContent.trim(),
+                valor: cells[3].textContent.trim(),
+                temperatura: cells[5].textContent.trim(),
+                observacao: cells[7].textContent.trim(),
+                status: status
+            });
         });
+        
+        const percentAcatada = Math.round((countAcatada / rows.length) * 100);
+        const percentNaoAcatada = Math.round((countNaoAcatada / rows.length) * 100);
+        const percentDevolvida = Math.round((countDevolvida / rows.length) * 100);
+        
+        // GERAR MENSAGEM DE TEXTO
+        let mensagemTexto = `*RELATÓRIO DE NOTAS FISCAIS*\n`;
+        mensagemTexto += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        mensagemTexto += `📅 ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}\n`;
+        mensagemTexto += `📊 ${rows.length} nota${rows.length > 1 ? 's' : ''}\n\n`;
+        
+        notasVisiveis.forEach((nota, index) => {
+            mensagemTexto += `*${index + 1}. ${nota.fornecedor}*\n`;
+            mensagemTexto += `   NF: ${nota.nf}\n`;
+            mensagemTexto += `   Valor: ${nota.valor}\n`;
+            mensagemTexto += `   Status: ${nota.status}\n`;
+            if (nota.observacao !== '-') {
+                mensagemTexto += `   Obs: ${nota.observacao}\n`;
+            }
+            mensagemTexto += `\n`;
+        });
+        
+        mensagemTexto += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        mensagemTexto += `📊 *RESUMO:*\n`;
+        if (countNaoAcatada > 0) mensagemTexto += `⚠️ ${countNaoAcatada} Não Acatada${countNaoAcatada > 1 ? 's' : ''}\n`;
+        if (countAcatada > 0) mensagemTexto += `✅ ${countAcatada} Acatada${countAcatada > 1 ? 's' : ''}\n`;
+        if (countDevolvida > 0) mensagemTexto += `🔄 ${countDevolvida} Devolvida${countDevolvida > 1 ? 's' : ''}\n`;
+        
+        // Copiar mensagem para clipboard
+        try {
+            await navigator.clipboard.writeText(mensagemTexto);
+            console.log('Mensagem copiada para área de transferência!');
+        } catch (err) {
+            console.log('Não foi possível copiar automaticamente');
+        }
+        
+        // Criar container para o relatório (IMAGEM)
+        const reportContainer = document.createElement('div');
+        reportContainer.style.cssText = `
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            background: white;
+            padding: 30px 40px;
+            width: 1100px;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', monospace, sans-serif;
+        `;
+        
+        // HTML do relatório estilo executivo (RESUMO COMPACTO)
+        reportContainer.innerHTML = `
+            <div style="text-align: center; border-top: 4px solid #000; border-bottom: 4px solid #000; padding: 12px 0; margin-bottom: 20px;">
+                <h1 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 1px;">CONTROLE DE RECEBIMENTO - NOTAS FISCAIS</h1>
+                <h2 style="margin: 5px 0 0 0; font-size: 13px; font-weight: 600; color: #666;">${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} • ${rows.length} nota${rows.length > 1 ? 's' : ''}</h2>
+            </div>
+            
+            <div style="background: #f8f9fa; border-left: 4px solid #007AFF; padding: 12px 15px; margin-bottom: 20px; display: flex; gap: 30px; justify-content: space-around;">
+                ${countNaoAcatada > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #FF3B30;">${countNaoAcatada}</div><div style="font-size: 11px; color: #666;">Não Acatadas</div></div>` : ''}
+                ${countAcatada > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #34C759;">${countAcatada}</div><div style="font-size: 11px; color: #666;">Acatadas</div></div>` : ''}
+                ${countDevolvida > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #FF9500;">${countDevolvida}</div><div style="font-size: 11px; color: #666;">Devolvidas</div></div>` : ''}
+                <div style="text-align: center;"><div style="font-size: 20px; font-weight: 700; color: #000;">R$ ${totalValor.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}</div><div style="font-size: 11px; color: #666;">Valor Total</div></div>
+            </div>
+            
+            <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 8px 0; margin-bottom: 5px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <thead>
+                        <tr style="background: #000; color: white;">
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">DATA</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">FORNECEDOR</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">NF</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">VALOR</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">STATUS</th>
+                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">OBSERVAÇÃO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${notasVisiveis.map((nota, index) => {
+                            let statusIcon = '';
+                            let statusText = '';
+                            let statusColor = '';
+                            
+                            if (nota.status === 'Acatada') {
+                                statusIcon = '✅';
+                                statusText = 'Acatada';
+                                statusColor = '#34C759';
+                            } else if (nota.status === 'Devolvida') {
+                                statusIcon = '🔄';
+                                statusText = 'Devolvida';
+                                statusColor = '#FF9500';
+                            } else {
+                                statusIcon = '⚠️';
+                                statusText = 'Não Acatada';
+                                statusColor = '#FF3B30';
+                            }
+                            
+                            const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                            return `
+                                <tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
+                                    <td style="padding: 10px; text-align: center; font-weight: 500;">${nota.data}</td>
+                                    <td style="padding: 10px; text-align: left; font-weight: 600;">${nota.fornecedor}</td>
+                                    <td style="padding: 10px; text-align: center; font-family: monospace;">${nota.nf}</td>
+                                    <td style="padding: 10px; text-align: right; font-weight: 600;">${nota.valor}</td>
+                                    <td style="padding: 10px; text-align: center; font-weight: 600; color: ${statusColor}; white-space: nowrap;">${statusIcon} ${statusText}</td>
+                                    <td style="padding: 10px; text-align: left; font-size: 10px;">${nota.observacao}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="border-top: 2px solid #000; padding-top: 5px;"></div>
+            
+            ${countNaoAcatada > 0 || countDevolvida > 0 ? `
+                <div style="background: #fff3cd; border-left: 4px solid #FF9500; padding: 12px; margin-top: 15px;">
+                    <div style="font-weight: 700; font-size: 11px; color: #856404;">
+                        ⚠️ AÇÃO NECESSÁRIA: ${countNaoAcatada + countDevolvida} nota${countNaoAcatada + countDevolvida > 1 ? 's' : ''} pendente${countNaoAcatada + countDevolvida > 1 ? 's' : ''}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        document.body.appendChild(reportContainer);
+        
+        // Capturar como imagem
+        const canvas = await html2canvas(reportContainer, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            logging: false,
+            width: 1100,
+            windowWidth: 1100
+        });
+        
+        // Remover container temporário
+        document.body.removeChild(reportContainer);
+        
+        // Converter para blob e baixar
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio-notas-${new Date().toISOString().slice(0,10)}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            // Restaurar botão
+            exportReportBtn.disabled = false;
+            exportReportBtn.innerHTML = '<span class="btn-icon">📊</span> Exportar Relatório';
+            
+            // Mostrar mensagem com opção de ver texto
+            const verTexto = confirm('✅ Relatório exportado!\n\n📋 A mensagem de texto foi copiada para a área de transferência.\n\nDeseja visualizar a mensagem?');
+            
+            if (verTexto) {
+                // Criar modal com a mensagem
+                const modalTexto = document.createElement('div');
+                modalTexto.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+                
+                modalTexto.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 18px;">📋 Mensagem de Texto (já copiada!)</h3>
+                        <textarea readonly style="width: 100%; flex: 1; min-height: 300px; max-height: calc(85vh - 150px); padding: 15px; font-family: monospace; font-size: 13px; border: 1px solid #ddd; border-radius: 10px; resize: none; box-sizing: border-box;">${mensagemTexto}</textarea>
+                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 12px 24px; background: #007AFF; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px;">Fechar</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modalTexto);
+            }
+        });
+        
+    } catch (error) {
+        console.error('Erro ao exportar:', error);
+        alert('Erro ao gerar relatório. Tente novamente.');
+        
+        // Restaurar botão
+        exportReportBtn.disabled = false;
+        exportReportBtn.innerHTML = '<span class="btn-icon">📊</span> Exportar Relatório';
     }
-    
-    renderTable(filtered);
 }
 
-// =================================================================
-// FILTROS
-// =================================================================
+// Editar Nota Fiscal
+async function editNotaFiscal(id) {
+    editingNFId = id;
+    document.getElementById('modalTitle').textContent = 'Editar Nota Fiscal';
+    
+    const nota = notasFiscais.find(n => n.id === id);
+    if (!nota) return;
+    
+    // Preencher form
+    document.getElementById('nfId').value = nota.id;
+    document.getElementById('nfData').value = nota.data;
+    document.getElementById('nfFornecedor').value = nota.fornecedor;
+    document.getElementById('nfNumero').value = formatNFNumber(nota.numero_nf);
+    document.getElementById('nfValor').value = formatCurrencyDisplay(nota.valor);
+    document.getElementById('nfHoraChegada').value = nota.hora_chegada;
+    document.getElementById('nfTemperatura').value = nota.temperatura || '';
+    document.getElementById('nfHoraSaida').value = nota.hora_saida || '';
+    document.getElementById('nfObservacao').value = nota.observacao || '';
+    document.getElementById('nfStatus').value = nota.status;
+    
+    // Mostrar campo status para admin
+    if (isAdmin) {
+        document.getElementById('statusGroup').style.display = 'block';
+    } else {
+        document.getElementById('statusGroup').style.display = 'none';
+    }
+    
+    nfModal.classList.add('active');
+}
 
-document.getElementById('toggleFiltersBtn').addEventListener('click', () => {
-    document.getElementById('filtersWrapper').classList.toggle('active');
-});
+// Fechar modal NF
+function closeNFModal() {
+    nfModal.classList.remove('active');
+    nfForm.reset();
+    editingNFId = null;
+}
 
-document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
-document.getElementById('filterNF').addEventListener('input', applyFilters);
-document.getElementById('filterStatus').addEventListener('change', applyFilters);
+// Fechar modal confirmação
+function closeConfirmModal() {
+    confirmModal.classList.remove('active');
+    deleteNFId = null;
+}
 
-document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+// Ordenação
+function handleSort(column) {
+    // Se clicar na mesma coluna, inverte a direção
+    if (currentSortColumn === column) {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        // Nova coluna
+        // Adicionar coluna anterior ao histórico (se não for a mesma)
+        if (currentSortColumn && currentSortColumn !== column) {
+            // Remove da história se já existe
+            sortHistory = sortHistory.filter(s => s.column !== currentSortColumn);
+            // Adiciona no início
+            sortHistory.unshift({
+                column: currentSortColumn,
+                direction: currentSortDirection
+            });
+            // Manter apenas últimas 2 ordenações no histórico
+            if (sortHistory.length > 2) {
+                sortHistory = sortHistory.slice(0, 2);
+            }
+        }
+        
+        currentSortColumn = column;
+        currentSortDirection = 'asc';
+    }
+    
+    // Atualizar indicadores visuais
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.classList.remove('sort-asc', 'sort-desc');
+    });
+    
+    const activeHeader = document.querySelector(`[data-column="${column}"]`);
+    activeHeader.classList.add(`sort-${currentSortDirection}`);
+    
+    // Aplicar filtros primeiro, depois ordenar
+    applyFilters();
+}
+
+function sortNotas(notas, column, direction) {
+    return notas.sort((a, b) => {
+        // Comparar pela coluna principal
+        let comparison = compareValues(a[column], b[column], column);
+        
+        // Se valores forem iguais, usar histórico de ordenações
+        if (comparison === 0 && sortHistory.length > 0) {
+            for (let sort of sortHistory) {
+                const histComp = compareValues(a[sort.column], b[sort.column], sort.column);
+                if (histComp !== 0) {
+                    // Aplicar direção do histórico
+                    return sort.direction === 'asc' ? histComp : -histComp;
+                }
+            }
+        }
+        
+        // Aplicar direção principal se não houver empate ou sem histórico
+        if (comparison !== 0) {
+            return direction === 'asc' ? comparison : -comparison;
+        }
+        
+        return 0;
+    });
+}
+
+function compareValues(valueA, valueB, column) {
+    // Tratar valores nulos
+    if (valueA === null || valueA === undefined) return 1;
+    if (valueB === null || valueB === undefined) return -1;
+    
+    if (column === 'valor' || column === 'numero_nf') {
+        // Números
+        return parseFloat(valueA) - parseFloat(valueB);
+    } else if (column === 'data') {
+        // Datas
+        return new Date(valueA) - new Date(valueB);
+    } else if (column === 'hora_chegada' || column === 'hora_saida') {
+        // Horas
+        return (valueA || '00:00').localeCompare(valueB || '00:00');
+    } else {
+        // Texto
+        return String(valueA).localeCompare(String(valueB), 'pt-BR', { sensitivity: 'base' });
+    }
+}
+
+// Confirmar delete
+function confirmDelete(id) {
+    deleteNFId = id;
+    confirmModal.classList.add('active');
+}
+
+// Deletar Nota Fiscal
+async function deleteNotaFiscal() {
+    if (!deleteNFId) return;
+    
+    const { error } = await supabaseClient
+        .from('notas_fiscais')
+        .delete()
+        .eq('id', deleteNFId);
+    
+    if (error) {
+        alert('Erro ao excluir nota fiscal');
+        return;
+    }
+    
+    closeConfirmModal();
+    await loadNotasFiscais();
+    applyFilters(); // Reaplicar filtros após deletar
+}
+
+// Submit Form NF
+async function handleNFSubmit(e) {
+    e.preventDefault();
+    
+    const nfData = {
+        data: document.getElementById('nfData').value,
+        fornecedor: document.getElementById('nfFornecedor').value,
+        numero_nf: parseCurrency(document.getElementById('nfNumero').value),
+        valor: parseCurrency(document.getElementById('nfValor').value),
+        hora_chegada: document.getElementById('nfHoraChegada').value,
+        temperatura: document.getElementById('nfTemperatura').value || null,
+        hora_saida: document.getElementById('nfHoraSaida').value || null,
+        observacao: document.getElementById('nfObservacao').value || null,
+        fiscal_nome: currentUser ? currentUser.nome : 'Sistema', // Manter para compatibilidade
+        fiscal_id: currentUser ? currentUser.id : null, // Manter para compatibilidade
+        status: isAdmin ? document.getElementById('nfStatus').value : 'Não Acatada'
+    };
+    
+    if (editingNFId) {
+        // Atualizar
+        // Fiscais podem editar hora_saida, temperatura e observacao
+        const updateData = isAdmin ? nfData : { 
+            hora_saida: nfData.hora_saida,
+            temperatura: nfData.temperatura,
+            observacao: nfData.observacao 
+        };
+        
+        const { error } = await supabaseClient
+            .from('notas_fiscais')
+            .update(updateData)
+            .eq('id', editingNFId);
+        
+        if (error) {
+            console.error('Erro detalhado ao atualizar:', error);
+            alert(`Erro ao atualizar nota fiscal: ${error.message || 'Erro desconhecido'}\n\nDetalhes: ${error.hint || ''}`);
+            return;
+        }
+    } else {
+        // Criar nova
+        const { error } = await supabaseClient
+            .from('notas_fiscais')
+            .insert([nfData]);
+        
+        if (error) {
+            console.error('Erro detalhado:', error);
+            alert('Erro ao criar nota fiscal: ' + (error.message || 'Erro desconhecido'));
+            return;
+        }
+    }
+    
+    closeNFModal();
+    // Recarregar dados e aplicar filtros mantidos
+    await loadNotasFiscais();
+    applyFilters(); // Reaplicar filtros após recarregar
+}
+
+// Filtros
+function applyFilters() {
+    const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
+    const nf = document.getElementById('filterNF').value;
+    const status = document.getElementById('filterStatus').value;
+    
+    // Usar selectedDates global
+    const datas = selectedDates;
+    
+    const filtered = notasFiscais.filter(nota => {
+        const matchFornecedor = !fornecedor || nota.fornecedor.toLowerCase().includes(fornecedor);
+        const matchNF = !nf || nota.numero_nf.toString().includes(nf.replace(/\./g, ''));
+        const matchData = datas.length === 0 || datas.includes(nota.data);
+        const matchStatus = !status || nota.status === status;
+        
+        return matchFornecedor && matchNF && matchData && matchStatus;
+    });
+    
+    // Aplicar ordenação atual
+    const sorted = sortNotas([...filtered], currentSortColumn, currentSortDirection);
+    renderNotasFiscais(sorted);
+}
+
+function clearFilters() {
     document.getElementById('filterFornecedor').value = '';
     document.getElementById('filterNF').value = '';
-    document.getElementById('filterStatus').value = '';
     document.getElementById('filterData').value = '';
+    document.getElementById('filterStatus').value = '';
+    
+    // Limpar datas selecionadas
     selectedDates = [];
-    updateSelectedDatesDisplay();
+    updateDateDisplay();
+    
+    // Aplicar ordenação atual
+    const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
+    renderNotasFiscais(sorted);
+}
+
+// Formatação
+function formatCurrency(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    value = (parseInt(value) / 100).toFixed(2);
+    value = value.replace('.', ',');
+    value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    e.target.value = 'R$ ' + value;
+}
+
+function formatCurrencyDisplay(value) {
+    if (!value) return 'R$ 0,00';
+    const num = parseFloat(value);
+    return 'R$ ' + num.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+}
+
+function parseCurrency(value) {
+    if (!value) return 0;
+    return parseFloat(value.replace(/[R$\s.]/g, '').replace(',', '.'));
+}
+
+function formatNF(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    // Formatar da direita para esquerda
+    if (value.length > 3) {
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+    e.target.value = value;
+}
+
+function formatNFNumber(value) {
+    if (!value) return '';
+    // Converter para string e remover pontos existentes
+    let numStr = value.toString().replace(/\./g, '');
+    // Formatar da direita para esquerda
+    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Formatar datas automaticamente e aplicar filtros
+function formatAndApplyDates(e) {
+    let value = e.target.value;
+    
+    // Remove tudo que não é número, vírgula ou barra
+    value = value.replace(/[^\d,/]/g, '');
+    
+    // Divide por vírgula
+    let dates = value.split(',');
+    
+    // Formata cada data
+    dates = dates.map(date => {
+        // Remove espaços
+        date = date.trim().replace(/\D/g, '');
+        
+        // Adiciona barras automaticamente
+        if (date.length >= 2) {
+            date = date.slice(0, 2) + '/' + date.slice(2);
+        }
+        if (date.length >= 5) {
+            date = date.slice(0, 5) + '/' + date.slice(5, 9);
+        }
+        
+        return date;
+    });
+    
+    e.target.value = dates.join(', ');
+    
+    // Aplicar filtros após formatação
     applyFilters();
-});
+}
 
-// Date picker
-document.getElementById('openDatePicker').addEventListener('click', () => {
+// Abrir calendário nativo para adicionar data
+function openCalendarPicker() {
+    const helperInput = document.getElementById('filterDataHelper');
+    const mainInput = document.getElementById('filterData');
+    
+    helperInput.click();
+    helperInput.focus();
+    
+    // Quando selecionar uma data
+    helperInput.onchange = function() {
+        if (this.value) {
+            // Converter aaaa-mm-dd para dd/mm/aaaa
+            const [ano, mes, dia] = this.value.split('-');
+            const dataFormatada = `${dia}/${mes}/${ano}`;
+            
+            // Adicionar à lista existente
+            const currentValue = mainInput.value.trim();
+            if (currentValue) {
+                // Verifica se a data já não está na lista
+                const datas = currentValue.split(',').map(d => d.trim());
+                if (!datas.includes(dataFormatada)) {
+                    mainInput.value = currentValue + ', ' + dataFormatada;
+                }
+            } else {
+                mainInput.value = dataFormatada;
+            }
+            
+            // Limpar helper
+            this.value = '';
+            
+            // Aplicar filtros
+            applyFilters();
+        }
+    };
+}
+
+// Formatar data automaticamente enquanto digita
+function handleDateInput(e) {
+    let value = e.target.value;
+    
+    // Remove tudo que não é número, vírgula ou barra
+    value = value.replace(/[^\d,/]/g, '');
+    
+    // Divide por vírgula
+    let dates = value.split(',');
+    
+    // Formata cada data
+    dates = dates.map(date => {
+        // Remove espaços
+        date = date.trim().replace(/\D/g, '');
+        
+        // Adiciona barras automaticamente
+        if (date.length >= 2) {
+            date = date.slice(0, 2) + '/' + date.slice(2);
+        }
+        if (date.length >= 5) {
+            date = date.slice(0, 5) + '/' + date.slice(5, 9);
+        }
+        
+        return date;
+    });
+    
+    e.target.value = dates.join(', ');
+    
+    // Aplicar filtros após formatação
+    applyFilters();
+}
+
+// Sistema de múltiplas datas
+let selectedDates = [];
+
+function openDatePicker() {
     document.getElementById('datePickerHelper').showPicker();
-});
+}
 
-document.getElementById('datePickerHelper').addEventListener('change', (e) => {
-    const dateValue = e.target.value;
-    if (dateValue && !selectedDates.includes(dateValue)) {
-        selectedDates.push(dateValue);
-        updateSelectedDatesDisplay();
+function handleDateSelection(e) {
+    const selectedDate = e.target.value;
+    if (!selectedDate) return;
+    
+    // Converter para formato dd/mm/yyyy para exibição
+    const displayDate = formatDate(selectedDate);
+    
+    // Adicionar se não existir
+    if (!selectedDates.includes(selectedDate)) {
+        selectedDates.push(selectedDate);
+        updateDateDisplay();
         applyFilters();
     }
-});
+    
+    // Limpar o helper para permitir nova seleção
+    e.target.value = '';
+}
 
-function updateSelectedDatesDisplay() {
+function updateDateDisplay() {
     const display = document.getElementById('selectedDatesDisplay');
     const input = document.getElementById('filterData');
     
@@ -371,280 +1013,35 @@ function updateSelectedDatesDisplay() {
         return;
     }
     
-    input.value = `${selectedDates.length} data(s) selecionada(s)`;
+    // Atualizar input oculto com datas
+    input.value = selectedDates.join(',');
     
-    display.innerHTML = selectedDates.map(date => {
-        return `<span class="date-tag">${formatDate(date)}<button type="button" class="remove-date-btn" data-date="${date}">×</button></span>`;
-    }).join('');
-    
-    // Event listeners para remover datas
-    display.querySelectorAll('.remove-date-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const date = btn.getAttribute('data-date');
-            selectedDates = selectedDates.filter(d => d !== date);
-            updateSelectedDatesDisplay();
-            applyFilters();
-        });
-    });
+    // Criar tags visuais
+    display.innerHTML = selectedDates
+        .map(date => {
+            const displayDate = formatDate(date);
+            return `
+                <div class="date-tag">
+                    ${displayDate}
+                    <span class="date-tag-remove" onclick="removeDate('${date}')">×</span>
+                </div>
+            `;
+        })
+        .join('');
 }
 
-// =================================================================
-// MODAL NOVA/EDITAR NOTA
-// =================================================================
-
-const modal = document.getElementById('nfModal');
-const closeModalBtn = document.getElementById('closeModal');
-const cancelBtn = document.getElementById('cancelBtn');
-
-document.getElementById('newNFBtn').addEventListener('click', openNewNFModal);
-
-// FAB Mobile
-const fabMobile = document.querySelector('.fab-mobile');
-if (fabMobile) {
-    fabMobile.addEventListener('click', openNewNFModal);
+function removeDate(date) {
+    selectedDates = selectedDates.filter(d => d !== date);
+    updateDateDisplay();
+    applyFilters();
 }
 
-function openNewNFModal() {
-    document.getElementById('modalTitle').textContent = 'Nova Nota Fiscal';
-    document.getElementById('nfForm').reset();
-    document.getElementById('nfId').value = '';
-    document.getElementById('nfData').valueAsDate = new Date();
-    modal.classList.add('active');
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
 }
 
-closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
-cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
-
-modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-        modal.classList.remove('active');
-    }
-});
-
-function editNota(id) {
-    const nota = allNotas.find(n => n.id === id);
-    if (!nota) return;
-    
-    document.getElementById('modalTitle').textContent = 'Editar Nota Fiscal';
-    document.getElementById('nfId').value = nota.id;
-    document.getElementById('nfData').value = nota.data;
-    document.getElementById('nfFornecedor').value = nota.fornecedor;
-    document.getElementById('nfNumero').value = nota.numero_nf;
-    document.getElementById('nfValor').value = formatCurrency(nota.valor);
-    document.getElementById('nfHoraChegada').value = nota.hora_chegada;
-    document.getElementById('nfTemperatura').value = nota.temperatura || '';
-    document.getElementById('nfHoraSaida').value = nota.hora_saida || '';
-    document.getElementById('nfObservacao').value = nota.observacao || '';
-    
-    if (currentUser.role === 'admin') {
-        document.getElementById('nfStatus').value = nota.status;
-    }
-    
-    modal.classList.add('active');
-}
-
-// Salvar nota
-document.getElementById('nfForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoading = submitBtn.querySelector('.btn-loading');
-    if (btnText) btnText.style.display = 'none';
-    if (btnLoading) btnLoading.style.display = 'inline-flex';
-    
-    const id = document.getElementById('nfId').value;
-    const valorStr = document.getElementById('nfValor').value;
-    const valorNumerico = parseFloat(valorStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-    
-    const notaData = {
-        data: document.getElementById('nfData').value,
-        fornecedor: document.getElementById('nfFornecedor').value,
-        numero_nf: document.getElementById('nfNumero').value,
-        valor: valorNumerico,
-        hora_chegada: document.getElementById('nfHoraChegada').value,
-        temperatura: document.getElementById('nfTemperatura').value || null,
-        hora_saida: document.getElementById('nfHoraSaida').value || null,
-        observacao: document.getElementById('nfObservacao').value || null,
-    };
-    
-    if (currentUser.role === 'admin') {
-        notaData.status = document.getElementById('nfStatus').value;
-    } else if (!id) {
-        notaData.status = 'Não Acatada';
-    }
-    
-    try {
-        if (id) {
-            const { error } = await window.supabaseClient
-                .from('notas_fiscais')
-                .update(notaData)
-                .eq('id', id);
-            
-            if (error) throw error;
-        } else {
-            const { error } = await window.supabaseClient
-                .from('notas_fiscais')
-                .insert([notaData]);
-            
-            if (error) throw error;
-        }
-        
-        modal.classList.remove('active');
-        await loadNotas();
-        
-    } catch (error) {
-        console.error('Erro ao salvar nota:', error);
-        alert('Erro ao salvar nota fiscal');
-    } finally {
-        submitBtn.disabled = false;
-        if (btnText) btnText.style.display = 'inline';
-        if (btnLoading) btnLoading.style.display = 'none';
-    }
-});
-
-// Formatação automática de valor
-document.getElementById('nfValor').addEventListener('input', (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value) {
-        value = (parseInt(value) / 100).toFixed(2);
-        e.target.value = `R$ ${value.replace('.', ',')}`;
-    }
-});
-
-// Formatação automática de NF
-document.getElementById('nfNumero').addEventListener('input', (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 9) value = value.slice(0, 9);
-    e.target.value = value;
-});
-
-// =================================================================
-// DELETAR NOTA
-// =================================================================
-
-const confirmModal = document.getElementById('confirmModal');
-const closeConfirmBtn = document.getElementById('closeConfirmModal');
-const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-
-function confirmDelete(id) {
-    deleteNFId = id;
-    confirmModal.classList.add('active');
-}
-
-closeConfirmBtn.addEventListener('click', () => {
-    confirmModal.classList.remove('active');
-    deleteNFId = null;
-});
-
-cancelDeleteBtn.addEventListener('click', () => {
-    confirmModal.classList.remove('active');
-    deleteNFId = null;
-});
-
-confirmDeleteBtn.addEventListener('click', async () => {
-    if (!deleteNFId) return;
-    
-    try {
-        const { error } = await window.supabaseClient
-            .from('notas_fiscais')
-            .delete()
-            .eq('id', deleteNFId);
-        
-        if (error) throw error;
-        
-        confirmModal.classList.remove('active');
-        deleteNFId = null;
-        await loadNotas();
-        
-    } catch (error) {
-        console.error('Erro ao deletar nota:', error);
-        alert('Erro ao deletar nota fiscal');
-    }
-});
-
-// =================================================================
-// EXPORTAR RELATÓRIO
-// =================================================================
-
-document.getElementById('exportReportBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('exportReportBtn');
-    btn.disabled = true;
-    btn.classList.add('loading');
-    
-    try {
-        await exportReport();
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove('loading');
-    }
-});
-
-async function exportReport() {
-    const table = document.getElementById('notasTable');
-    
-    try {
-        const canvas = await html2canvas(table, {
-            scale: 1, // CORRIGIDO: reduzido de 2 para 1 para evitar erro de tamanho máximo
-            backgroundColor: '#ffffff',
-            windowWidth: 1200 // Limitar largura
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        
-        const link = document.createElement('a');
-        link.href = imgData;
-        link.download = `relatorio_notas_${new Date().toISOString().split('T')[0]}.png`;
-        link.click();
-        
-        const notas = Array.from(document.querySelectorAll('#notasTableBody tr'));
-        let message = `📊 *Relatório de Notas Fiscais*\n`;
-        message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
-        
-        notas.forEach((row, idx) => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length > 0) {
-                message += `*NF ${idx + 1}*\n`;
-                message += `📅 ${cells[0].textContent}\n`;
-                message += `🏢 ${cells[1].textContent}\n`;
-                message += `📄 ${cells[2].textContent}\n`;
-                message += `💰 ${cells[3].textContent}\n`;
-                message += `✅ ${cells[8].textContent.trim()}\n\n`;
-            }
-        });
-        
-        console.log('Mensagem WhatsApp gerada:', message);
-        
-    } catch (error) {
-        console.error('Erro ao exportar:', error);
-        alert('Erro ao gerar relatório');
-    }
-}
-
-// =================================================================
-// VERIFICAR SESSÃO AO CARREGAR
-// =================================================================
-
-window.addEventListener('load', async () => {
-    const { data: { session } } = await window.supabaseClient.auth.getSession();
-    
-    if (session) {
-        // Já está logado, buscar dados do usuário
-        const { data: usuarios } = await window.supabaseClient
-            .from('usuarios')
-            .select('*')
-            .eq('email', session.user.email)
-            .single();
-        
-        if (usuarios) {
-            currentUser = usuarios;
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainScreen').classList.add('active');
-            updateUserUI();
-            loadNotas();
-        }
-    }
-});
+// Tornar funções globais
+window.editNotaFiscal = editNotaFiscal;
+window.confirmDelete = confirmDelete;
