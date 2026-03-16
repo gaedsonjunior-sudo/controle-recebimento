@@ -32,22 +32,31 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     errorDiv.textContent = '';
     
     try {
-        const { data: usuarios, error } = await window.supabaseClient
+        // Buscar usuário na tabela usuarios pelo username para pegar o email
+        const { data: usuarios, error: userError } = await window.supabaseClient
             .from('usuarios')
             .select('*')
-            .eq('username', username)
-            .eq('password', password);
+            .eq('username', username);
         
-        if (error) {
-            console.error('Erro Supabase:', error);
-            throw new Error('Erro ao conectar com o banco de dados');
+        if (userError || !usuarios || usuarios.length === 0) {
+            throw new Error('Usuário não encontrado');
         }
         
-        if (!usuarios || usuarios.length === 0) {
-            throw new Error('Credenciais inválidas');
+        const user = usuarios[0];
+        
+        // Autenticar usando Supabase Auth com o email do usuário
+        const { data: authData, error: authError } = await window.supabaseClient.auth.signInWithPassword({
+            email: user.email,
+            password: password
+        });
+        
+        if (authError) {
+            console.error('Erro de autenticação:', authError);
+            throw new Error('Senha incorreta');
         }
         
-        currentUser = usuarios[0];
+        // Salvar dados do usuário
+        currentUser = user;
         
         // Transição suave para tela principal
         setTimeout(() => {
@@ -61,7 +70,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         
     } catch (error) {
         console.error('Erro no login:', error);
-        errorDiv.textContent = 'Usuário ou senha incorretos';
+        errorDiv.textContent = error.message || 'Usuário ou senha incorretos';
         
         // Reset button state
         submitBtn.disabled = false;
@@ -98,7 +107,10 @@ function updateUserUI() {
 }
 
 // Logout
-document.getElementById('logoutBtn').addEventListener('click', () => {
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    // Fazer logout no Supabase Auth
+    await window.supabaseClient.auth.signOut();
+    
     currentUser = null;
     document.getElementById('mainScreen').classList.remove('active');
     document.getElementById('loginScreen').classList.add('active');
