@@ -795,3 +795,9 @@ body {
     margin: 1rem;
   }
 }
+
+/* Remove duplicidade data - mantém só 1 campo */
+.date-picker-container:has(#filterData) .date-picker-btn,
+.date-picker-container:has(#filterData) #datePickerHelper,
+.date-picker-container:has(#filterData) .selected-dates {
+  display
