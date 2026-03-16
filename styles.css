@@ -206,6 +206,34 @@ body {
 .btn-large { padding: 16px 32px; font-size: 16px; font-weight: 600; }
 .btn-icon { font-size: 20px; font-weight: 500; }
 
+/* FAB - Floating Action Button Nova NF */
+#newNFBtn {
+  position: fixed !important;
+  bottom: 24px;
+  right: 24px;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  font-size: 24px !important;
+  font-weight: 300 !important;
+  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.4) !important;
+  z-index: 1000 !important;
+  min-width: auto !important;
+  background: var(--primary-color) !important;
+  color: white !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#newNFBtn:hover {
+  background: var(--primary-dark) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 12px 30px rgba(30, 64, 175, 0.5) !important;
+}
+
 /* Header */
 .app-header {
   background: rgba(255, 255, 255, 0.95);
@@ -287,8 +315,10 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
+  padding-bottom: 100px; /* Espaço pro FAB */
 }
 
+/* Controls (sem botão Nova NF) */
 .controls-section {
   display: flex;
   justify-content: flex-start;
@@ -298,7 +328,7 @@ body {
   flex-wrap: wrap;
 }
 
-/* Filters - PEQUENOS */
+/* Filters - HORIZONTAL FULL WIDTH */
 .filters-wrapper {
   max-height: 0;
   overflow: hidden;
@@ -307,41 +337,51 @@ body {
 }
 
 .filters-wrapper.show {
-  max-height: 500px;
+  max-height: 120px; /* Altura fixa compacta */
   margin-bottom: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--separator-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 
 .filters-container {
-  background: var(--bg-card);
-  border-radius: var(--border-radius-card);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--separator-color);
+  padding: 1rem 1.5rem;
+  display: flex;
+  width: 100%;
+  gap: 1rem;
+  align-items: center;
 }
 
 .filters-container h3 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  margin-bottom: 1rem;
   color: var(--text-primary);
   letter-spacing: -0.3px;
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
+  flex: 1;
   gap: 1rem;
-  align-items: start;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-width: 180px;
+  flex-shrink: 0;
 }
 
 .filter-group label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: -0.1px;
@@ -349,10 +389,10 @@ body {
 
 .filter-group input,
 .filter-group select {
-  padding: 10px 12px;
+  padding: 8px 12px;
   border: 1px solid var(--separator-color);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   background: var(--bg-tertiary);
   transition: var(--transition-fast);
 }
@@ -363,27 +403,6 @@ body {
   border-color: var(--primary-color);
   background: var(--bg-primary);
   box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-.date-picker-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.date-picker-btn {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.date-picker-btn:hover {
-  background: var(--primary-dark);
 }
 
 /* Table */
@@ -683,43 +702,19 @@ body {
 
 .error-message.show { display: block; }
 
-/* === RESPONSIVIDADE === */
+/* RESPONSIVIDADE */
 
-/* DESKTOP - Conferência */
+/* DESKTOP */
 @media (min-width: 1024px) {
   .app-main { max-width: 1400px; padding: 2.5rem; }
-  
   .controls-section { gap: 8px; }
-  
-  .filters-wrapper.show {
-    max-height: none !important;
-    position: sticky;
-    top: 80px;
-    z-index: 20;
-    display: flex !important;
-    flex-direction: row;
-    background: white;
-    padding: 1.5rem;
-    border-radius: 0 0 12px 12px;
-    margin-bottom: 0 !important;
-    box-shadow: var(--shadow-md);
-  }
-  
-  .notas-table th {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: white !important;
-    box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
-  }
-  
   .notas-table { font-size: 14px; }
   .notas-table th { font-size: 11px; padding: 12px 8px; }
   .notas-table td { padding: 12px 8px; font-size: 13px; }
   .action-btn { padding: 6px 10px; font-size: 11px; }
 }
 
-/* MOBILE - Edição NF */
+/* MOBILE */
 @media (max-width: 768px) {
   .app-main { padding: 1rem; }
   
@@ -729,22 +724,9 @@ body {
     gap: 12px;
   }
   
-  #newNFBtn {
-    position: sticky !important;
-    bottom: 20px !important;
-    left: 20px !important;
-    right: 20px !important;
-    z-index: 100 !important;
-    box-shadow: 0 10px 25px rgb(0 0 0 / 0.2) !important;
-    border-radius: 12px !important;
-    padding: 18px 24px !important;
-    font-size: 16px !important;
-    margin: 0 !important;
-  }
-  
   .filters-container {
-    width: 100%;
-    padding: 1.25rem;
+    padding: 1rem;
+    flex-wrap: nowrap;
   }
   
   .filters-grid {
@@ -770,12 +752,7 @@ body {
     font-size: 13px;
   }
   
-  .action-buttons {
-    flex-direction: row !important;
-    gap: 4px;
-  }
-  
-  /* Modal Fullscreen para Edição */
+  /* Modal Fullscreen */
   .modal.active { padding: 0 !important; }
   .modal-content {
     position: fixed !important;
@@ -787,7 +764,6 @@ body {
     height: 100vh !important;
     margin: 0 !important;
     max-width: none !important;
-    max-height: none !important;
   }
   
   .nf-form {
@@ -809,7 +785,6 @@ body {
     padding: 16px !important;
     font-size: 16px !important;
     min-height: 56px !important;
-    border-radius: 12px !important;
   }
 }
 
@@ -818,10 +793,5 @@ body {
     padding: 2rem 1.5rem;
     border-radius: 20px;
     margin: 1rem;
-  }
-  
-  .btn-large {
-    padding: 16px 24px;
-    font-size: 16px;
   }
 }
