@@ -608,21 +608,22 @@ body {
 
 .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(4, 1fr); /* NOVO: 4 colunas fixas */
     gap: var(--spacing-md);
-    align-items: end;
+    align-items: start; /* NOVO: alinhamento no topo */
 }
 
 .filter-group {
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-xs);
 }
 
 .filter-group label {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary); /* NOVO: cor mais escura */
+    margin-bottom: 0;
 }
 
 /* NOVO DESIGN: Date picker com ícone inline */
@@ -828,11 +829,18 @@ body {
     padding: 16px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
+    text-align: center; /* NOVO: Centralizar por padrão */
 }
 
 /* Células que não devem quebrar linha */
 .notas-table td:not(.observacao-cell) {
     white-space: nowrap;
+}
+
+/* Fornecedor e Observação alinhados à esquerda */
+.notas-table td:nth-child(2), /* Fornecedor */
+.observacao-cell {
+    text-align: left;
 }
 
 /* Observação pode quebrar */

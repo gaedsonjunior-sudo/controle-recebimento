@@ -588,8 +588,9 @@ async function exportReport() {
     
     try {
         const canvas = await html2canvas(table, {
-            scale: 2,
-            backgroundColor: '#ffffff'
+            scale: 1, // CORRIGIDO: reduzido de 2 para 1 para evitar erro de tamanho máximo
+            backgroundColor: '#ffffff',
+            windowWidth: 1200 // Limitar largura
         });
         
         const imgData = canvas.toDataURL('image/png');
