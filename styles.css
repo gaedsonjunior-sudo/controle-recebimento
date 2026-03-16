@@ -943,11 +943,8 @@ body {
     }
     
     #newNFBtn {
-        position: fixed !important;
-        bottom: 24px !important;
-        right: 24px !important;
-        width: 60px !important;
-        height
+        width: 100%;
+        margin-top: 12px;
     }
 
     .header-content {
