@@ -828,6 +828,7 @@ body {
     padding: 16px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
+    white-space: nowrap;
 }
 
 /* NOVO DESIGN: Status badges coloridos */

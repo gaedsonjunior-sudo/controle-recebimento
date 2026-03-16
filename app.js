@@ -377,6 +377,9 @@ function removeDate(date) {
     applyFilters();
 }
 
+// Expor função globalmente para uso no onclick
+window.removeDate = removeDate;
+
 // =================================================================
 // MODAL NOVA/EDITAR NOTA
 // =================================================================
@@ -431,6 +434,9 @@ function editNota(id) {
     
     modal.classList.add('active');
 }
+
+// Expor função globalmente para uso no onclick
+window.editNota = editNota;
 
 // Salvar nota
 document.getElementById('nfForm').addEventListener('submit', async (e) => {
@@ -523,6 +529,9 @@ function confirmDelete(id) {
     deleteNFId = id;
     confirmModal.classList.add('active');
 }
+
+// Expor função globalmente para uso no onclick
+window.confirmDelete = confirmDelete;
 
 closeConfirmBtn.addEventListener('click', () => {
     confirmModal.classList.remove('active');
