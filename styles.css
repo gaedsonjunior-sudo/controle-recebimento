@@ -206,18 +206,17 @@ body {
 .btn-large { padding: 16px 32px; font-size: 16px; font-weight: 600; }
 .btn-icon { font-size: 20px; font-weight: 500; }
 
-/* FAB - Floating Action Button CORRIGIDO (APENAS "+") */
+/* FAB - Floating Action Button Nova NF */
 #newNFBtn {
   position: fixed !important;
-  bottom: 24px !important;
-  right: 24px !important;
-  width: 60px !important;
-  height: 60px !important;
+  bottom: 24px;
+  right: 24px;
+  width: 56px !important;
+  height: 56px !important;
   border-radius: 50% !important;
   padding: 0 !important;
-  font-size: 28px !important;
-  font-weight: 200 !important;
-  line-height: 1 !important;
+  font-size: 24px !important;
+  font-weight: 300 !important;
   box-shadow: 0 8px 25px rgba(30, 64, 175, 0.4) !important;
   z-index: 1000 !important;
   min-width: auto !important;
@@ -231,11 +230,9 @@ body {
 
 #newNFBtn:hover {
   background: var(--primary-dark) !important;
-  transform: scale(1.1) !important;
-  box-shadow: 0 12px 35px rgba(30, 64, 175, 0.5) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 12px 30px rgba(30, 64, 175, 0.5) !important;
 }
-
-#newNFBtn span, #newNFBtn .btn-icon { display: none !important; }
 
 /* Header */
 .app-header {
@@ -321,7 +318,7 @@ body {
   padding-bottom: 100px; /* Espaço pro FAB */
 }
 
-/* Controls (só toggle filtros + export) */
+/* Controls (sem botão Nova NF) */
 .controls-section {
   display: flex;
   justify-content: flex-start;
@@ -331,7 +328,7 @@ body {
   flex-wrap: wrap;
 }
 
-/* Filters - HORIZONTAL COM 3 CAMPOS */
+/* Filters - HORIZONTAL FULL WIDTH */
 .filters-wrapper {
   max-height: 0;
   overflow: hidden;
@@ -340,7 +337,7 @@ body {
 }
 
 .filters-wrapper.show {
-  max-height: 80px; /* Mais compacto */
+  max-height: 120px; /* Altura fixa compacta */
   margin-bottom: 1.5rem;
   background: var(--bg-card);
   border: 1px solid var(--separator-color);
@@ -350,7 +347,7 @@ body {
 }
 
 .filters-container {
-  padding: 0.75rem 1.25rem;
+  padding: 1rem 1.5rem;
   display: flex;
   width: 100%;
   gap: 1rem;
@@ -361,6 +358,7 @@ body {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.3px;
   margin: 0;
   white-space: nowrap;
   flex-shrink: 0;
@@ -372,12 +370,13 @@ body {
   gap: 1rem;
   overflow-x: auto;
   padding-bottom: 4px;
+}
 
 .filter-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 160px;
+  min-width: 180px;
   flex-shrink: 0;
 }
 
@@ -405,9 +404,6 @@ body {
   background: var(--bg-primary);
   box-shadow: 0 0 0 3px var(--primary-light);
 }
-
-/* ESCONDE BOTÃO LIMPAR FILTROS */
-#clearFiltersBtn { display: none !important; }
 
 /* Table */
 .table-container {
@@ -707,6 +703,8 @@ body {
 .error-message.show { display: block; }
 
 /* RESPONSIVIDADE */
+
+/* DESKTOP */
 @media (min-width: 1024px) {
   .app-main { max-width: 1400px; padding: 2.5rem; }
   .controls-section { gap: 8px; }
@@ -716,6 +714,7 @@ body {
   .action-btn { padding: 6px 10px; font-size: 11px; }
 }
 
+/* MOBILE */
 @media (max-width: 768px) {
   .app-main { padding: 1rem; }
   
@@ -753,6 +752,7 @@ body {
     font-size: 13px;
   }
   
+  /* Modal Fullscreen */
   .modal.active { padding: 0 !important; }
   .modal-content {
     position: fixed !important;
@@ -794,47 +794,4 @@ body {
     border-radius: 20px;
     margin: 1rem;
   }
-}
-
-/* Ajuste layout filtros em linha, incluindo Data(s) */
-.filters-wrapper.show {
-  margin-bottom: 16px;
-}
-
-.filters-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.filters-container h3 {
-  margin: 0;
-  white-space: nowrap;
-}
-
-.filters-grid {
-  display: flex;
-  flex: 1;
-  gap: 12px;
-}
-
-.filter-group {
-  min-width: 180px;
-}
-
-/* Campo de data como input simples, sem helper extra */
-.date-picker-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.date-picker-container input#filterData {
-  flex: 1;
-}
-
-.date-picker-btn,
-.date-helper,
-.selected-dates {
-  display: none;
 }
