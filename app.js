@@ -241,16 +241,20 @@ function formatDate(dateStr) {
 
 function formatNF(nf) {
     if (!nf) return '-';
-    const clean = nf.replace(/\D/g, '');
+    // Garantir que é string
+    const nfStr = String(nf);
+    const clean = nfStr.replace(/\D/g, '');
     if (clean.length === 9) {
         return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6)}`;
     }
-    return nf;
+    return nfStr;
 }
 
 function formatCurrency(value) {
-    if (!value) return 'R$ 0,00';
-    return `R$ ${parseFloat(value).toFixed(2).replace('.', ',')}`;
+    if (!value || isNaN(value)) return 'R$ 0,00';
+    const num = parseFloat(value);
+    if (isNaN(num)) return 'R$ 0,00';
+    return `R$ ${num.toFixed(2).replace('.', ',')}`;
 }
 
 // =================================================================
