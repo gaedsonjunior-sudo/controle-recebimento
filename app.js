@@ -124,7 +124,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 async function loadNotas() {
     try {
         const { data, error } = await window.supabaseClient
-            .from('notasfiscais')
+            .from('notas_fiscais')
             .select('*')
             .order('data', { ascending: false });
         
@@ -463,14 +463,14 @@ document.getElementById('nfForm').addEventListener('submit', async (e) => {
     try {
         if (id) {
             const { error } = await window.supabaseClient
-                .from('notasfiscais')
+                .from('notas_fiscais')
                 .update(notaData)
                 .eq('id', id);
             
             if (error) throw error;
         } else {
             const { error } = await window.supabaseClient
-                .from('notasfiscais')
+                .from('notas_fiscais')
                 .insert([notaData]);
             
             if (error) throw error;
@@ -535,7 +535,7 @@ confirmDeleteBtn.addEventListener('click', async () => {
     
     try {
         const { error } = await window.supabaseClient
-            .from('notasfiscais')
+            .from('notas_fiscais')
             .delete()
             .eq('id', deleteNFId);
         
