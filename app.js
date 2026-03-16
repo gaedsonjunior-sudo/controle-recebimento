@@ -36,14 +36,18 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             .from('usuarios')
             .select('*')
             .eq('username', username)
-            .eq('password', password)
-            .single();
+            .eq('password', password);
         
-        if (error || !usuarios) {
+        if (error) {
+            console.error('Erro Supabase:', error);
+            throw new Error('Erro ao conectar com o banco de dados');
+        }
+        
+        if (!usuarios || usuarios.length === 0) {
             throw new Error('Credenciais inválidas');
         }
         
-        currentUser = usuarios;
+        currentUser = usuarios[0];
         
         // Transição suave para tela principal
         setTimeout(() => {
