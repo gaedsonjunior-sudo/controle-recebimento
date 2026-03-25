@@ -817,3 +817,39 @@ function gerarRelatorioCustom(notas) {
     const texto = `📊 *Relatório de Notas Fiscais*\n📅 Data: ${hoje}\n📦 Quantidade: ${notas.length}\n💰 Total: R$ ${total.toFixed(2)}`;
     navigator.clipboard.writeText(texto);
 }
+
+
+/* ===== CONECTAR BOTÃO EXPORTAR ===== */
+
+function coletarNotasDaTabela() {
+    const linhas = document.querySelectorAll("#notasTableBody tr");
+    let notas = [];
+
+    linhas.forEach(tr => {
+        const tds = tr.querySelectorAll("td");
+        if (tds.length > 0) {
+            notas.push({
+                data: tds[0]?.innerText,
+                fornecedor: tds[1]?.innerText,
+                numero_nf: tds[2]?.innerText,
+                valor: parseFloat(tds[3]?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0,
+                hora_chegada: tds[4]?.innerText,
+                temperatura: tds[5]?.innerText,
+                hora_saida: tds[6]?.innerText,
+                status: tds[7]?.innerText
+            });
+        }
+    });
+
+    return notas;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("exportReportBtn");
+    if (btn) {
+        btn.addEventListener("click", () => {
+            const notas = coletarNotasDaTabela();
+            gerarRelatorioCustom(notas);
+        });
+    }
+});
