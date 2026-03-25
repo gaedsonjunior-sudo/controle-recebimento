@@ -909,6 +909,8 @@ input[type="time"],
 select,
 textarea {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     padding: var(--spacing-3) var(--spacing-4);
     border: 1px solid var(--gray-300);
     border-radius: var(--radius-md);
@@ -917,6 +919,7 @@ textarea {
     color: var(--gray-900);
     background: white;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 input:focus,
