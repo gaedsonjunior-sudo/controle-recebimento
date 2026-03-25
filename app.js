@@ -60,11 +60,7 @@ function showConfigError() {
             Verifique se as credenciais estão corretas no arquivo <code>config.js</code><br>
             <small>Abra o Console (F12) para mais detalhes do erro.</small>
         `;
-        loginError.classList.add('show');
-        loginError.style.background = '#fee2e2';
-        loginError.style.border = '2px solid #ef4444';
-        loginError.style.padding = '16px';
-        loginError.style.borderRadius = '8px';
+        loginError.classList.add('active');
     }
 }
 
@@ -91,9 +87,22 @@ async function loadUserData(user) {
     if (data) {
         currentUser = data;
         isAdmin = data.role === 'admin';
-        currentUserName.textContent = data.nome;
-        currentUserRole.textContent = isAdmin ? 'Administrador' : 'Fiscal';
+        updateUserDisplay();
     }
+}
+
+// Atualizar exibição do usuário (funciona para desktop e mobile)
+function updateUserDisplay() {
+    const userNameElements = document.querySelectorAll('#currentUserName');
+    const userRoleElements = document.querySelectorAll('#currentUserRole');
+    
+    userNameElements.forEach(el => {
+        el.textContent = currentUser.nome;
+    });
+    
+    userRoleElements.forEach(el => {
+        el.textContent = isAdmin ? 'Administrador' : 'Fiscal';
+    });
 }
 
 // Event Listeners
@@ -104,14 +113,37 @@ function setupEventListeners() {
     // Logout
     logoutBtn.addEventListener('click', handleLogout);
     
-    // Nova NF
+    // Nova NF (desktop)
     newNFBtn.addEventListener('click', openNewNFModal);
+    
+    // Nova NF (mobile FAB)
+    const fabMobile = document.getElementById('fabMobile');
+    if (fabMobile) {
+        fabMobile.addEventListener('click', openNewNFModal);
+    }
     
     // Toggle Filtros
     toggleFiltersBtn.addEventListener('click', toggleFilters);
     
     // Exportar Relatório
     exportReportBtn.addEventListener('click', exportReport);
+    
+    // Sidebar Toggle (mobile)
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+    
+    // Fechar sidebar ao clicar fora (mobile)
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('.main-content');
+    if (sidebar && mainContent) {
+        mainContent.addEventListener('click', () => {
+            if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+    }
     
     // Fechar modals
     document.getElementById('closeModal').addEventListener('click', closeNFModal);
@@ -146,6 +178,21 @@ function setupEventListeners() {
     });
 }
 
+// Toggle Sidebar (mobile)
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('active');
+}
+
+// Toggle Filtros
+function toggleFilters() {
+    const filtersContent = document.getElementById('filtersContent');
+    const toggleBtn = document.getElementById('toggleFiltersBtn');
+    
+    filtersContent.classList.toggle('active');
+    toggleBtn.classList.toggle('active');
+}
+
 // Setup listeners de ordenação (chamado após carregar dados)
 function setupSortListeners() {
     document.querySelectorAll('.sortable').forEach(header => {
@@ -164,7 +211,7 @@ async function handleLogin(e) {
     const password = document.getElementById('password').value;
     
     loginError.textContent = '';
-    loginError.classList.remove('show');
+    loginError.classList.remove('active');
     
     try {
         // Primeiro, buscar o email do usuário pelo username
@@ -219,7 +266,7 @@ async function handleLogin(e) {
     } catch (error) {
         console.error('Erro no login:', error);
         loginError.textContent = error.message || 'Erro ao fazer login';
-        loginError.classList.add('show');
+        loginError.classList.add('active');
     }
 }
 
@@ -235,572 +282,338 @@ async function handleLogout() {
 // Mostrar telas
 function showLoginScreen() {
     loginScreen.classList.add('active');
-    loginScreen.style.display = 'flex';
     mainScreen.classList.remove('active');
-    mainScreen.style.display = 'none';
 }
 
 function showMainScreen() {
     loginScreen.classList.remove('active');
-    loginScreen.style.display = 'none';
     mainScreen.classList.add('active');
-    mainScreen.style.display = 'block';
-    currentUserName.textContent = currentUser.nome;
-    currentUserRole.textContent = isAdmin ? 'Administrador' : 'Fiscal';
+    updateUserDisplay();
     loadNotasFiscais();
 }
 
-// Carregar Notas Fiscais
+// Carregar notas fiscais
 async function loadNotasFiscais() {
-    const { data, error } = await supabaseClient
-        .from('notas_fiscais')
-        .select('*');
-    
-    if (error) {
-        console.error('Erro ao carregar notas:', error);
-        return;
-    }
-    
-    notasFiscais = data || [];
-    
-    // Aplicar ordenação padrão (data desc)
-    const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
-    renderNotasFiscais(sorted);
-    
-    // Atualizar indicador visual
-    const defaultHeader = document.querySelector(`[data-column="${currentSortColumn}"]`);
-    if (defaultHeader) {
-        defaultHeader.classList.add(`sort-${currentSortDirection}`);
-    }
-    
-    // Configurar listeners de ordenação após renderizar tabela
-    setupSortListeners();
-}
-
-// Renderizar Notas Fiscais
-function renderNotasFiscais(notas) {
-    notasTableBody.innerHTML = '';
-    
-    if (notas.length === 0) {
-        emptyState.classList.add('show');
-        totalNotas.textContent = '0 notas';
-        return;
-    }
-    
-    emptyState.classList.remove('show');
-    totalNotas.textContent = `${notas.length} nota${notas.length !== 1 ? 's' : ''}`;
-    
-    notas.forEach(nota => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${formatDate(nota.data)}</td>
-            <td>${nota.fornecedor}</td>
-            <td>${formatNFNumber(nota.numero_nf)}</td>
-            <td>${formatCurrencyDisplay(nota.valor)}</td>
-            <td>${nota.hora_chegada}</td>
-            <td>${nota.temperatura || '-'}</td>
-            <td>${nota.hora_saida || '-'}</td>
-            <td class="observacao-cell">${nota.observacao || '-'}</td>
-            <td>
-                <span class="status-badge ${
-                    nota.status === 'Acatada' ? 'status-acatada' : 
-                    nota.status === 'Devolvida' ? 'status-devolvida' : 
-                    'status-nao-acatada'
-                }">
-                    ${nota.status}
-                </span>
-            </td>
-            <td class="actions-column">
-                <div class="action-buttons">
-                    <button class="action-btn btn-edit" onclick="editNotaFiscal('${nota.id}')">Editar</button>
-                    ${isAdmin ? `<button class="action-btn btn-delete" onclick="confirmDelete('${nota.id}')">Excluir</button>` : ''}
-                </div>
-            </td>
-        `;
-        notasTableBody.appendChild(tr);
-    });
-}
-
-// Abrir modal Nova NF
-function openNewNFModal() {
-    editingNFId = null;
-    document.getElementById('modalTitle').textContent = 'Nova Nota Fiscal';
-    document.getElementById('nfId').value = '';
-    nfForm.reset();
-    
-    // Setar data e hora atual
-    const now = new Date();
-    document.getElementById('nfData').value = now.toISOString().split('T')[0];
-    document.getElementById('nfHoraChegada').value = now.toTimeString().slice(0, 5);
-    
-    // Esconder campo status para fiscais
-    if (!isAdmin) {
-        document.getElementById('statusGroup').style.display = 'none';
-    } else {
-        document.getElementById('statusGroup').style.display = 'block';
-    }
-    
-    nfModal.classList.add('active');
-}
-
-// Toggle Filtros
-function toggleFilters() {
-    filtersWrapper.classList.toggle('show');
-    
-    // Atualizar texto do botão
-    if (filtersWrapper.classList.contains('show')) {
-        toggleFiltersBtn.innerHTML = '<span class="btn-icon">🔍</span> Ocultar Filtros';
-    } else {
-        toggleFiltersBtn.innerHTML = '<span class="btn-icon">🔍</span> Filtros';
-    }
-}
-
-// Exportar Relatório
-async function exportReport() {
     try {
-        // Pegar apenas as linhas visíveis da tabela
-        const tableContainer = document.querySelector('.table-container');
+        const { data, error } = await supabaseClient
+            .from('notas_fiscais')
+            .select('*')
+            .order('data', { ascending: false });
         
-        if (!tableContainer) {
-            alert('Nenhuma tabela encontrada!');
-            return;
-        }
+        if (error) throw error;
         
-        // Verificar se há notas para exportar
-        const rows = document.querySelectorAll('#notasTableBody tr');
-        if (rows.length === 0) {
-            alert('Nenhuma nota para exportar! Aplique filtros ou adicione notas.');
-            return;
-        }
+        notasFiscais = data || [];
         
-        // Mostrar loading
-        exportReportBtn.disabled = true;
-        exportReportBtn.innerHTML = '<span class="btn-icon">⏳</span> Gerando...';
+        // Aplicar ordenação inicial (data desc)
+        const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
+        renderNotasFiscais(sorted);
         
-        // Coletar dados das notas visíveis
-        const notasVisiveis = [];
-        let totalValor = 0;
-        let countAcatada = 0;
-        let countNaoAcatada = 0;
-        let countDevolvida = 0;
+        // Setup listeners de ordenação
+        setupSortListeners();
         
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            const status = cells[8].textContent.trim();
-            const valorText = cells[3].textContent.replace('R$', '').replace(/\./g, '').replace(',', '.');
-            const valor = parseFloat(valorText);
+    } catch (error) {
+        console.error('Erro ao carregar notas:', error);
+        alert('Erro ao carregar notas fiscais');
+    }
+}
+
+// Renderizar notas fiscais (desktop e mobile)
+function renderNotasFiscais(notas) {
+    // Atualizar contadores
+    const total = notas.length;
+    totalNotas.textContent = `${total} ${total === 1 ? 'nota' : 'notas'}`;
+    
+    const totalNotasMobile = document.getElementById('totalNotasMobile');
+    if (totalNotasMobile) {
+        totalNotasMobile.textContent = `${total} ${total === 1 ? 'nota' : 'notas'}`;
+    }
+    
+    // Desktop: Tabela
+    if (total === 0) {
+        notasTableBody.innerHTML = '';
+        emptyState.classList.add('active');
+    } else {
+        emptyState.classList.remove('active');
+        notasTableBody.innerHTML = notas.map(nota => {
+            const statusClass = nota.status.toLowerCase().replace(/\s/g, '-').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             
-            if (status === 'Não Acatada') countNaoAcatada++;
-            if (status === 'Acatada') countAcatada++;
-            if (status === 'Devolvida') countDevolvida++;
-            totalValor += valor;
-            
-            notasVisiveis.push({
-                data: cells[0].textContent.trim(),
-                fornecedor: cells[1].textContent.trim(),
-                nf: cells[2].textContent.trim(),
-                valor: cells[3].textContent.trim(),
-                temperatura: cells[5].textContent.trim(),
-                observacao: cells[7].textContent.trim(),
-                status: status
-            });
-        });
-        
-        const percentAcatada = Math.round((countAcatada / rows.length) * 100);
-        const percentNaoAcatada = Math.round((countNaoAcatada / rows.length) * 100);
-        const percentDevolvida = Math.round((countDevolvida / rows.length) * 100);
-        
-        // GERAR MENSAGEM DE TEXTO
-        let mensagemTexto = `*RELATÓRIO DE NOTAS FISCAIS*\n`;
-        mensagemTexto += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        mensagemTexto += `📅 ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}\n`;
-        mensagemTexto += `📊 ${rows.length} nota${rows.length > 1 ? 's' : ''}\n\n`;
-        
-        notasVisiveis.forEach((nota, index) => {
-            mensagemTexto += `*${index + 1}. ${nota.fornecedor}*\n`;
-            mensagemTexto += `   NF: ${nota.nf}\n`;
-            mensagemTexto += `   Valor: ${nota.valor}\n`;
-            mensagemTexto += `   Status: ${nota.status}\n`;
-            if (nota.observacao !== '-') {
-                mensagemTexto += `   Obs: ${nota.observacao}\n`;
-            }
-            mensagemTexto += `\n`;
-        });
-        
-        mensagemTexto += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        mensagemTexto += `📊 *RESUMO:*\n`;
-        if (countNaoAcatada > 0) mensagemTexto += `⚠️ ${countNaoAcatada} Não Acatada${countNaoAcatada > 1 ? 's' : ''}\n`;
-        if (countAcatada > 0) mensagemTexto += `✅ ${countAcatada} Acatada${countAcatada > 1 ? 's' : ''}\n`;
-        if (countDevolvida > 0) mensagemTexto += `🔄 ${countDevolvida} Devolvida${countDevolvida > 1 ? 's' : ''}\n`;
-        
-        // Copiar mensagem para clipboard
-        try {
-            await navigator.clipboard.writeText(mensagemTexto);
-            console.log('Mensagem copiada para área de transferência!');
-        } catch (err) {
-            console.log('Não foi possível copiar automaticamente');
-        }
-        
-        // Criar container para o relatório (IMAGEM)
-        const reportContainer = document.createElement('div');
-        reportContainer.style.cssText = `
-            position: fixed;
-            left: -9999px;
-            top: 0;
-            background: white;
-            padding: 30px 40px;
-            width: 1100px;
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', monospace, sans-serif;
-        `;
-        
-        // HTML do relatório estilo executivo (RESUMO COMPACTO)
-        reportContainer.innerHTML = `
-            <div style="text-align: center; border-top: 4px solid #000; border-bottom: 4px solid #000; padding: 12px 0; margin-bottom: 20px;">
-                <h1 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 1px;">CONTROLE DE RECEBIMENTO - NOTAS FISCAIS</h1>
-                <h2 style="margin: 5px 0 0 0; font-size: 13px; font-weight: 600; color: #666;">${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} • ${rows.length} nota${rows.length > 1 ? 's' : ''}</h2>
-            </div>
-            
-            <div style="background: #f8f9fa; border-left: 4px solid #007AFF; padding: 12px 15px; margin-bottom: 20px; display: flex; gap: 30px; justify-content: space-around;">
-                ${countNaoAcatada > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #FF3B30;">${countNaoAcatada}</div><div style="font-size: 11px; color: #666;">Não Acatadas</div></div>` : ''}
-                ${countAcatada > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #34C759;">${countAcatada}</div><div style="font-size: 11px; color: #666;">Acatadas</div></div>` : ''}
-                ${countDevolvida > 0 ? `<div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #FF9500;">${countDevolvida}</div><div style="font-size: 11px; color: #666;">Devolvidas</div></div>` : ''}
-                <div style="text-align: center;"><div style="font-size: 20px; font-weight: 700; color: #000;">R$ ${totalValor.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}</div><div style="font-size: 11px; color: #666;">Valor Total</div></div>
-            </div>
-            
-            <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 8px 0; margin-bottom: 5px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                    <thead>
-                        <tr style="background: #000; color: white;">
-                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">DATA</th>
-                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">FORNECEDOR</th>
-                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">NF</th>
-                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">VALOR</th>
-                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">STATUS</th>
-                            <th style="padding: 8px 10px; text-align: center; font-weight: 600;">OBSERVAÇÃO</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${notasVisiveis.map((nota, index) => {
-                            let statusIcon = '';
-                            let statusText = '';
-                            let statusColor = '';
-                            
-                            if (nota.status === 'Acatada') {
-                                statusIcon = '✅';
-                                statusText = 'Acatada';
-                                statusColor = '#34C759';
-                            } else if (nota.status === 'Devolvida') {
-                                statusIcon = '🔄';
-                                statusText = 'Devolvida';
-                                statusColor = '#FF9500';
-                            } else {
-                                statusIcon = '⚠️';
-                                statusText = 'Não Acatada';
-                                statusColor = '#FF3B30';
-                            }
-                            
-                            const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
-                            return `
-                                <tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
-                                    <td style="padding: 10px; text-align: center; font-weight: 500;">${nota.data}</td>
-                                    <td style="padding: 10px; text-align: left; font-weight: 600;">${nota.fornecedor}</td>
-                                    <td style="padding: 10px; text-align: center; font-family: monospace;">${nota.nf}</td>
-                                    <td style="padding: 10px; text-align: right; font-weight: 600;">${nota.valor}</td>
-                                    <td style="padding: 10px; text-align: center; font-weight: 600; color: ${statusColor}; white-space: nowrap;">${statusIcon} ${statusText}</td>
-                                    <td style="padding: 10px; text-align: left; font-size: 10px;">${nota.observacao}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div style="border-top: 2px solid #000; padding-top: 5px;"></div>
-            
-            ${countNaoAcatada > 0 || countDevolvida > 0 ? `
-                <div style="background: #fff3cd; border-left: 4px solid #FF9500; padding: 12px; margin-top: 15px;">
-                    <div style="font-weight: 700; font-size: 11px; color: #856404;">
-                        ⚠️ AÇÃO NECESSÁRIA: ${countNaoAcatada + countDevolvida} nota${countNaoAcatada + countDevolvida > 1 ? 's' : ''} pendente${countNaoAcatada + countDevolvida > 1 ? 's' : ''}
-                    </div>
-                </div>
-            ` : ''}
-        `;
-        
-        document.body.appendChild(reportContainer);
-        
-        // Capturar como imagem
-        const canvas = await html2canvas(reportContainer, {
-            backgroundColor: '#ffffff',
-            scale: 2,
-            logging: false,
-            width: 1100,
-            windowWidth: 1100
-        });
-        
-        // Remover container temporário
-        document.body.removeChild(reportContainer);
-        
-        // Converter para blob e baixar
-        canvas.toBlob(blob => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `relatorio-notas-${new Date().toISOString().slice(0,10)}.png`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            // Restaurar botão
-            exportReportBtn.disabled = false;
-            exportReportBtn.innerHTML = '<span class="btn-icon">📊</span> Exportar Relatório';
-            
-            // Mostrar mensagem com opção de ver texto
-            const verTexto = confirm('✅ Relatório exportado!\n\n📋 A mensagem de texto foi copiada para a área de transferência.\n\nDeseja visualizar a mensagem?');
-            
-            if (verTexto) {
-                // Criar modal com a mensagem
-                const modalTexto = document.createElement('div');
-                modalTexto.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0,0,0,0.5);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 10000;
-                `;
+            return `
+                <tr data-id="${nota.id}">
+                    <td>${formatDate(nota.data)}</td>
+                    <td>${nota.fornecedor}</td>
+                    <td>${formatNFNumber(nota.numero_nf)}</td>
+                    <td>${formatCurrencyDisplay(nota.valor)}</td>
+                    <td>${nota.hora_chegada || '-'}</td>
+                    <td>${nota.temperatura || '-'}</td>
+                    <td>${nota.hora_saida || '-'}</td>
+                    <td title="${nota.observacao || ''}">${nota.observacao || '-'}</td>
+                    <td><span class="status-badge ${statusClass}">${nota.status}</span></td>
+                    <td class="actions-column">
+                        <div class="action-buttons">
+                            <button class="btn-action edit" onclick="editNotaFiscal('${nota.id}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action delete" onclick="confirmDelete('${nota.id}')" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    // Mobile: Cards
+    const notasCards = document.getElementById('notasCards');
+    const emptyStateMobile = document.getElementById('emptyStateMobile');
+    
+    if (notasCards && emptyStateMobile) {
+        if (total === 0) {
+            notasCards.innerHTML = '';
+            emptyStateMobile.classList.add('active');
+        } else {
+            emptyStateMobile.classList.remove('active');
+            notasCards.innerHTML = notas.map(nota => {
+                const statusClass = nota.status.toLowerCase().replace(/\s/g, '-').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 
-                modalTexto.innerHTML = `
-                    <div style="background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column;">
-                        <h3 style="margin: 0 0 15px 0; font-size: 18px;">📋 Mensagem de Texto (já copiada!)</h3>
-                        <textarea readonly style="width: 100%; flex: 1; min-height: 300px; max-height: calc(85vh - 150px); padding: 15px; font-family: monospace; font-size: 13px; border: 1px solid #ddd; border-radius: 10px; resize: none; box-sizing: border-box;">${mensagemTexto}</textarea>
-                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 12px 24px; background: #007AFF; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px;">Fechar</button>
+                return `
+                    <div class="nota-card" data-id="${nota.id}">
+                        <div class="nota-card-header">
+                            <div class="nota-card-title">
+                                <div class="nota-card-fornecedor">${nota.fornecedor}</div>
+                                <div class="nota-card-numero">NF ${formatNFNumber(nota.numero_nf)}</div>
+                            </div>
+                            <div class="nota-card-status">
+                                <span class="status-badge ${statusClass}">${nota.status}</span>
+                            </div>
+                        </div>
+                        <div class="nota-card-body">
+                            <div class="nota-card-field">
+                                <div class="nota-card-label">Data</div>
+                                <div class="nota-card-value">${formatDate(nota.data)}</div>
+                            </div>
+                            <div class="nota-card-field">
+                                <div class="nota-card-label">Valor</div>
+                                <div class="nota-card-value">${formatCurrencyDisplay(nota.valor)}</div>
+                            </div>
+                            <div class="nota-card-field">
+                                <div class="nota-card-label">Chegada</div>
+                                <div class="nota-card-value">${nota.hora_chegada || '-'}</div>
+                            </div>
+                            <div class="nota-card-field">
+                                <div class="nota-card-label">Saída</div>
+                                <div class="nota-card-value">${nota.hora_saida || '-'}</div>
+                            </div>
+                            ${nota.temperatura ? `
+                                <div class="nota-card-field">
+                                    <div class="nota-card-label">Temperatura</div>
+                                    <div class="nota-card-value">${nota.temperatura}</div>
+                                </div>
+                            ` : ''}
+                            ${nota.observacao ? `
+                                <div class="nota-card-field nota-card-observacao">
+                                    <div class="nota-card-label">Observação</div>
+                                    <div class="nota-card-value">${nota.observacao}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="nota-card-actions">
+                            <button class="btn-action edit" onclick="editNotaFiscal('${nota.id}')">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="btn-action delete" onclick="confirmDelete('${nota.id}')">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>
                         </div>
                     </div>
                 `;
-                
-                document.body.appendChild(modalTexto);
-            }
-        });
-        
-    } catch (error) {
-        console.error('Erro ao exportar:', error);
-        alert('Erro ao gerar relatório. Tente novamente.');
-        
-        // Restaurar botão
-        exportReportBtn.disabled = false;
-        exportReportBtn.innerHTML = '<span class="btn-icon">📊</span> Exportar Relatório';
+            }).join('');
+        }
     }
-}
-
-// Editar Nota Fiscal
-async function editNotaFiscal(id) {
-    editingNFId = id;
-    document.getElementById('modalTitle').textContent = 'Editar Nota Fiscal';
-    
-    const nota = notasFiscais.find(n => n.id === id);
-    if (!nota) return;
-    
-    // Preencher form
-    document.getElementById('nfId').value = nota.id;
-    document.getElementById('nfData').value = nota.data;
-    document.getElementById('nfFornecedor').value = nota.fornecedor;
-    document.getElementById('nfNumero').value = formatNFNumber(nota.numero_nf);
-    document.getElementById('nfValor').value = formatCurrencyDisplay(nota.valor);
-    document.getElementById('nfHoraChegada').value = nota.hora_chegada;
-    document.getElementById('nfTemperatura').value = nota.temperatura || '';
-    document.getElementById('nfHoraSaida').value = nota.hora_saida || '';
-    document.getElementById('nfObservacao').value = nota.observacao || '';
-    document.getElementById('nfStatus').value = nota.status;
-    
-    // Mostrar campo status para admin
-    if (isAdmin) {
-        document.getElementById('statusGroup').style.display = 'block';
-    } else {
-        document.getElementById('statusGroup').style.display = 'none';
-    }
-    
-    nfModal.classList.add('active');
-}
-
-// Fechar modal NF
-function closeNFModal() {
-    nfModal.classList.remove('active');
-    nfForm.reset();
-    editingNFId = null;
-}
-
-// Fechar modal confirmação
-function closeConfirmModal() {
-    confirmModal.classList.remove('active');
-    deleteNFId = null;
 }
 
 // Ordenação
 function handleSort(column) {
-    // Se clicar na mesma coluna, inverte a direção
+    // Se clicou na mesma coluna, inverte direção
     if (currentSortColumn === column) {
         currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-        // Nova coluna
-        // Adicionar coluna anterior ao histórico (se não for a mesma)
-        if (currentSortColumn && currentSortColumn !== column) {
-            // Remove da história se já existe
-            sortHistory = sortHistory.filter(s => s.column !== currentSortColumn);
-            // Adiciona no início
-            sortHistory.unshift({
-                column: currentSortColumn,
-                direction: currentSortDirection
-            });
-            // Manter apenas últimas 2 ordenações no histórico
-            if (sortHistory.length > 2) {
-                sortHistory = sortHistory.slice(0, 2);
-            }
-        }
-        
+        // Nova coluna: sempre começa ascendente, exceto data que começa descendente
         currentSortColumn = column;
-        currentSortDirection = 'asc';
+        currentSortDirection = column === 'data' ? 'desc' : 'asc';
     }
     
     // Atualizar indicadores visuais
     document.querySelectorAll('.sortable').forEach(header => {
-        header.classList.remove('sort-asc', 'sort-desc');
+        header.classList.remove('active');
+        const icon = header.querySelector('.sort-icon');
+        if (icon) icon.textContent = '⇅';
     });
     
     const activeHeader = document.querySelector(`[data-column="${column}"]`);
-    activeHeader.classList.add(`sort-${currentSortDirection}`);
+    if (activeHeader) {
+        activeHeader.classList.add('active');
+        const icon = activeHeader.querySelector('.sort-icon');
+        if (icon) {
+            icon.textContent = currentSortDirection === 'asc' ? '↑' : '↓';
+        }
+    }
     
-    // Aplicar filtros primeiro, depois ordenar
+    // Aplicar ordenação
     applyFilters();
 }
 
 function sortNotas(notas, column, direction) {
     return notas.sort((a, b) => {
-        // Comparar pela coluna principal
-        let comparison = compareValues(a[column], b[column], column);
+        let aVal = a[column];
+        let bVal = b[column];
         
-        // Se valores forem iguais, usar histórico de ordenações
-        if (comparison === 0 && sortHistory.length > 0) {
-            for (let sort of sortHistory) {
-                const histComp = compareValues(a[sort.column], b[sort.column], sort.column);
-                if (histComp !== 0) {
-                    // Aplicar direção do histórico
-                    return sort.direction === 'asc' ? histComp : -histComp;
-                }
-            }
+        // Tratar valores nulos
+        if (aVal === null || aVal === undefined) return direction === 'asc' ? 1 : -1;
+        if (bVal === null || bVal === undefined) return direction === 'asc' ? -1 : 1;
+        
+        // Conversão de tipos para comparação correta
+        if (column === 'valor') {
+            aVal = parseFloat(aVal);
+            bVal = parseFloat(bVal);
+        } else if (column === 'numero_nf') {
+            aVal = aVal.toString();
+            bVal = bVal.toString();
+        } else if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
         }
         
-        // Aplicar direção principal se não houver empate ou sem histórico
-        if (comparison !== 0) {
-            return direction === 'asc' ? comparison : -comparison;
-        }
+        // Comparação
+        let comparison = 0;
+        if (aVal > bVal) comparison = 1;
+        if (aVal < bVal) comparison = -1;
         
-        return 0;
+        return direction === 'asc' ? comparison : -comparison;
     });
 }
 
-function compareValues(valueA, valueB, column) {
-    // Tratar valores nulos
-    if (valueA === null || valueA === undefined) return 1;
-    if (valueB === null || valueB === undefined) return -1;
-    
-    if (column === 'valor' || column === 'numero_nf') {
-        // Números
-        return parseFloat(valueA) - parseFloat(valueB);
-    } else if (column === 'data') {
-        // Datas
-        return new Date(valueA) - new Date(valueB);
-    } else if (column === 'hora_chegada' || column === 'hora_saida') {
-        // Horas
-        return (valueA || '00:00').localeCompare(valueB || '00:00');
-    } else {
-        // Texto
-        return String(valueA).localeCompare(String(valueB), 'pt-BR', { sensitivity: 'base' });
-    }
+// Modals
+function openNewNFModal() {
+    editingNFId = null;
+    document.getElementById('modalTitle').textContent = 'Nova Nota Fiscal';
+    document.getElementById('statusGroup').style.display = 'none';
+    nfForm.reset();
+    nfModal.classList.add('active');
 }
 
-// Confirmar delete
+async function editNotaFiscal(id) {
+    editingNFId = id;
+    const nota = notasFiscais.find(n => n.id === id);
+    
+    if (!nota) return;
+    
+    document.getElementById('modalTitle').textContent = 'Editar Nota Fiscal';
+    document.getElementById('nfId').value = nota.id;
+    document.getElementById('nfData').value = nota.data;
+    document.getElementById('nfFornecedor').value = nota.fornecedor;
+    document.getElementById('nfNumero').value = formatNFNumber(nota.numero_nf);
+    document.getElementById('nfValor').value = formatCurrencyDisplay(nota.valor);
+    document.getElementById('nfHoraChegada').value = nota.hora_chegada || '';
+    document.getElementById('nfTemperatura').value = nota.temperatura || '';
+    document.getElementById('nfHoraSaida').value = nota.hora_saida || '';
+    document.getElementById('nfObservacao').value = nota.observacao || '';
+    document.getElementById('nfStatus').value = nota.status;
+    document.getElementById('statusGroup').style.display = 'flex';
+    
+    nfModal.classList.add('active');
+}
+
+function closeNFModal() {
+    nfModal.classList.remove('active');
+    editingNFId = null;
+    nfForm.reset();
+}
+
 function confirmDelete(id) {
     deleteNFId = id;
     confirmModal.classList.add('active');
 }
 
-// Deletar Nota Fiscal
-async function deleteNotaFiscal() {
-    if (!deleteNFId) return;
-    
-    const { error } = await supabaseClient
-        .from('notas_fiscais')
-        .delete()
-        .eq('id', deleteNFId);
-    
-    if (error) {
-        alert('Erro ao excluir nota fiscal');
-        return;
-    }
-    
-    closeConfirmModal();
-    await loadNotasFiscais();
-    applyFilters(); // Reaplicar filtros após deletar
+function closeConfirmModal() {
+    confirmModal.classList.remove('active');
+    deleteNFId = null;
 }
 
-// Submit Form NF
+// Submit form
 async function handleNFSubmit(e) {
     e.preventDefault();
     
-    const nfData = {
+    const formData = {
         data: document.getElementById('nfData').value,
         fornecedor: document.getElementById('nfFornecedor').value,
-        numero_nf: parseCurrency(document.getElementById('nfNumero').value),
+        numero_nf: document.getElementById('nfNumero').value.replace(/\./g, ''),
         valor: parseCurrency(document.getElementById('nfValor').value),
         hora_chegada: document.getElementById('nfHoraChegada').value,
         temperatura: document.getElementById('nfTemperatura').value || null,
         hora_saida: document.getElementById('nfHoraSaida').value || null,
         observacao: document.getElementById('nfObservacao').value || null,
-        fiscal_nome: currentUser ? currentUser.nome : 'Sistema', // Manter para compatibilidade
-        fiscal_id: currentUser ? currentUser.id : null, // Manter para compatibilidade
-        status: isAdmin ? document.getElementById('nfStatus').value : 'Não Acatada'
+        fiscal_nome: currentUser.nome,
+        fiscal_id: currentUser.id
     };
     
-    if (editingNFId) {
-        // Atualizar
-        // Fiscais podem editar hora_saida, temperatura e observacao
-        const updateData = isAdmin ? nfData : { 
-            hora_saida: nfData.hora_saida,
-            temperatura: nfData.temperatura,
-            observacao: nfData.observacao 
-        };
-        
-        const { error } = await supabaseClient
-            .from('notas_fiscais')
-            .update(updateData)
-            .eq('id', editingNFId);
-        
-        if (error) {
-            console.error('Erro detalhado ao atualizar:', error);
-            alert(`Erro ao atualizar nota fiscal: ${error.message || 'Erro desconhecido'}\n\nDetalhes: ${error.hint || ''}`);
-            return;
+    try {
+        if (editingNFId) {
+            // Atualizar
+            formData.status = document.getElementById('nfStatus').value;
+            
+            const { error } = await supabaseClient
+                .from('notas_fiscais')
+                .update(formData)
+                .eq('id', editingNFId);
+            
+            if (error) throw error;
+            
+            console.log('✅ Nota fiscal atualizada');
+        } else {
+            // Criar nova
+            formData.status = 'Não Acatada';
+            
+            const { error } = await supabaseClient
+                .from('notas_fiscais')
+                .insert([formData]);
+            
+            if (error) throw error;
+            
+            console.log('✅ Nova nota fiscal criada');
         }
-    } else {
-        // Criar nova
-        const { error } = await supabaseClient
-            .from('notas_fiscais')
-            .insert([nfData]);
         
-        if (error) {
-            console.error('Erro detalhado:', error);
-            alert('Erro ao criar nota fiscal: ' + (error.message || 'Erro desconhecido'));
-            return;
-        }
+        closeNFModal();
+        await loadNotasFiscais();
+        applyFilters();
+        
+    } catch (error) {
+        console.error('Erro ao salvar nota fiscal:', error);
+        alert('Erro ao salvar nota fiscal');
     }
+}
+
+// Deletar
+async function deleteNotaFiscal() {
+    if (!deleteNFId) return;
     
-    closeNFModal();
-    // Recarregar dados e aplicar filtros mantidos
-    await loadNotasFiscais();
-    applyFilters(); // Reaplicar filtros após recarregar
+    try {
+        const { error } = await supabaseClient
+            .from('notas_fiscais')
+            .delete()
+            .eq('id', deleteNFId);
+        
+        if (error) throw error;
+        
+        console.log('✅ Nota fiscal excluída');
+        closeConfirmModal();
+        await loadNotasFiscais();
+        applyFilters();
+        
+    } catch (error) {
+        console.error('Erro ao excluir nota fiscal:', error);
+        alert('Erro ao excluir nota fiscal');
+    }
 }
 
 // Filtros
@@ -841,6 +654,29 @@ function clearFilters() {
     renderNotasFiscais(sorted);
 }
 
+// Exportar relatório
+async function exportReport() {
+    try {
+        const table = document.querySelector('.table-section');
+        if (!table) return;
+        
+        const canvas = await html2canvas(table, {
+            scale: 2,
+            backgroundColor: '#ffffff'
+        });
+        
+        const link = document.createElement('a');
+        link.download = `relatorio-notas-fiscais-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        console.log('✅ Relatório exportado');
+    } catch (error) {
+        console.error('Erro ao exportar relatório:', error);
+        alert('Erro ao exportar relatório');
+    }
+}
+
 // Formatação
 function formatCurrency(e) {
     let value = e.target.value.replace(/\D/g, '');
@@ -863,7 +699,6 @@ function parseCurrency(value) {
 
 function formatNF(e) {
     let value = e.target.value.replace(/\D/g, '');
-    // Formatar da direita para esquerda
     if (value.length > 3) {
         value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
@@ -872,110 +707,8 @@ function formatNF(e) {
 
 function formatNFNumber(value) {
     if (!value) return '';
-    // Converter para string e remover pontos existentes
     let numStr = value.toString().replace(/\./g, '');
-    // Formatar da direita para esquerda
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-
-// Formatar datas automaticamente e aplicar filtros
-function formatAndApplyDates(e) {
-    let value = e.target.value;
-    
-    // Remove tudo que não é número, vírgula ou barra
-    value = value.replace(/[^\d,/]/g, '');
-    
-    // Divide por vírgula
-    let dates = value.split(',');
-    
-    // Formata cada data
-    dates = dates.map(date => {
-        // Remove espaços
-        date = date.trim().replace(/\D/g, '');
-        
-        // Adiciona barras automaticamente
-        if (date.length >= 2) {
-            date = date.slice(0, 2) + '/' + date.slice(2);
-        }
-        if (date.length >= 5) {
-            date = date.slice(0, 5) + '/' + date.slice(5, 9);
-        }
-        
-        return date;
-    });
-    
-    e.target.value = dates.join(', ');
-    
-    // Aplicar filtros após formatação
-    applyFilters();
-}
-
-// Abrir calendário nativo para adicionar data
-function openCalendarPicker() {
-    const helperInput = document.getElementById('filterDataHelper');
-    const mainInput = document.getElementById('filterData');
-    
-    helperInput.click();
-    helperInput.focus();
-    
-    // Quando selecionar uma data
-    helperInput.onchange = function() {
-        if (this.value) {
-            // Converter aaaa-mm-dd para dd/mm/aaaa
-            const [ano, mes, dia] = this.value.split('-');
-            const dataFormatada = `${dia}/${mes}/${ano}`;
-            
-            // Adicionar à lista existente
-            const currentValue = mainInput.value.trim();
-            if (currentValue) {
-                // Verifica se a data já não está na lista
-                const datas = currentValue.split(',').map(d => d.trim());
-                if (!datas.includes(dataFormatada)) {
-                    mainInput.value = currentValue + ', ' + dataFormatada;
-                }
-            } else {
-                mainInput.value = dataFormatada;
-            }
-            
-            // Limpar helper
-            this.value = '';
-            
-            // Aplicar filtros
-            applyFilters();
-        }
-    };
-}
-
-// Formatar data automaticamente enquanto digita
-function handleDateInput(e) {
-    let value = e.target.value;
-    
-    // Remove tudo que não é número, vírgula ou barra
-    value = value.replace(/[^\d,/]/g, '');
-    
-    // Divide por vírgula
-    let dates = value.split(',');
-    
-    // Formata cada data
-    dates = dates.map(date => {
-        // Remove espaços
-        date = date.trim().replace(/\D/g, '');
-        
-        // Adiciona barras automaticamente
-        if (date.length >= 2) {
-            date = date.slice(0, 2) + '/' + date.slice(2);
-        }
-        if (date.length >= 5) {
-            date = date.slice(0, 5) + '/' + date.slice(5, 9);
-        }
-        
-        return date;
-    });
-    
-    e.target.value = dates.join(', ');
-    
-    // Aplicar filtros após formatação
-    applyFilters();
 }
 
 // Sistema de múltiplas datas
@@ -988,9 +721,6 @@ function openDatePicker() {
 function handleDateSelection(e) {
     const selectedDate = e.target.value;
     if (!selectedDate) return;
-    
-    // Converter para formato dd/mm/yyyy para exibição
-    const displayDate = formatDate(selectedDate);
     
     // Adicionar se não existir
     if (!selectedDates.includes(selectedDate)) {
@@ -1023,7 +753,7 @@ function updateDateDisplay() {
             return `
                 <div class="date-tag">
                     ${displayDate}
-                    <span class="date-tag-remove" onclick="removeDate('${date}')">×</span>
+                    <button type="button" onclick="removeDate('${date}')">×</button>
                 </div>
             `;
         })
@@ -1045,3 +775,4 @@ function formatDate(dateString) {
 // Tornar funções globais
 window.editNotaFiscal = editNotaFiscal;
 window.confirmDelete = confirmDelete;
+window.removeDate = removeDate;

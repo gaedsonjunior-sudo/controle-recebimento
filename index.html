@@ -5,25 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Notas Fiscais - Recebimento</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- Tela de Login -->
     <div id="loginScreen" class="screen active">
         <div class="login-container">
             <div class="login-header">
-                <div class="login-icon"><i class="fas fa-file-lines"></i></div>
+                <div class="login-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
                 <h1>Controle de Notas Fiscais</h1>
                 <p>Sistema de Gerenciamento de Recebimento</p>
             </div>
             <form id="loginForm" class="login-form">
                 <div class="form-group">
                     <label for="username">Usuário</label>
-                    <input type="text" id="username" required autocomplete="username">
+                    <input type="text" id="username" required autocomplete="username" placeholder="Digite seu usuário">
                 </div>
                 <div class="form-group">
                     <label for="password">Senha</label>
-                    <input type="password" id="password" required autocomplete="current-password">
+                    <input type="password" id="password" required autocomplete="current-password" placeholder="Digite sua senha">
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Entrar</button>
                 <div id="loginError" class="error-message"></div>
@@ -33,117 +39,233 @@
 
     <!-- Tela Principal -->
     <div id="mainScreen" class="screen">
-        <header class="app-header">
-            <div class="header-content">
-                <div class="header-left">
-                    <div class="app-logo"><i class="fas fa-file-lines"></i></div>
-                    <div class="app-title">
-                        <h1>Notas Fiscais</h1>
-                        <p>Gerenciamento de Recebimento</p>
-                    </div>
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="sidebar-title">NF Manager</span>
                 </div>
-                <div class="header-right">
-                    <div class="user-info">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <i class="fas fa-file-invoice"></i>
+                    <span>Notas Fiscais</span>
+                </a>
+                <!-- Estrutura preparada para futuras telas -->
+                <!-- <a href="#" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Relatórios</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a> -->
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
                         <span class="user-name" id="currentUserName"></span>
                         <span class="user-role" id="currentUserRole"></span>
                     </div>
-                    <button id="logoutBtn" class="btn btn-secondary btn-icon">Sair</button>
                 </div>
-            </div>
-        </header>
-
-        <main class="app-main">
-            <div class="controls-section">
-                <button id="toggleFiltersBtn" class="btn btn-secondary">
-                    <span class="btn-icon">🔍</span>
-                    Filtros
-                </button>
-                <button id="exportReportBtn" class="btn btn-secondary">
-                    <span class="btn-icon">📊</span>
-                    Exportar Relatório
-                </button>
-                <button id="newNFBtn" class="btn btn-primary btn-large">
-                    <span class="btn-icon">+</span>
-                    Nova Nota Fiscal
+                <button id="logoutBtn" class="btn-logout" title="Sair">
+                    <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
+        </aside>
 
-            <div class="filters-wrapper" id="filtersWrapper">
-                <div class="filters-container">
-                    <h3>Filtros</h3>
-                    <div class="filters-grid">
-                        <div class="filter-group">
-                            <label for="filterFornecedor">Fornecedor</label>
-                            <input type="text" id="filterFornecedor" placeholder="Buscar fornecedor...">
-                        </div>
-                        <div class="filter-group">
-                            <label for="filterNF">Número da NF</label>
-                            <input type="text" id="filterNF" placeholder="Buscar nº...">
-                        </div>
-                        <div class="filter-group">
-                            <label for="filterData">Data(s)</label>
-                            <div class="date-picker-container">
-                                <input type="text" id="filterData" placeholder="Clique no calendário para selecionar" readonly>
-                                <button type="button" id="openDatePicker" class="date-picker-btn" title="Selecionar datas">
-                                    📅
-                                </button>
-                                <input type="date" id="datePickerHelper" class="date-helper">
+        <!-- Conteúdo Principal -->
+        <div class="main-content">
+            <header class="page-header">
+                <div class="page-header-top">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Notas Fiscais</h1>
+                        <p class="page-subtitle">Gerenciamento de recebimento e controle</p>
+                    </div>
+                    <div class="page-actions">
+                        <button id="exportReportBtn" class="btn btn-secondary">
+                            <i class="fas fa-download"></i>
+                            <span class="btn-text">Exportar</span>
+                        </button>
+                        <button id="newNFBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            <span class="btn-text">Nova Nota Fiscal</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filters-section" id="filtersWrapper">
+                    <div class="filters-header">
+                        <button id="toggleFiltersBtn" class="btn-filter-toggle">
+                            <i class="fas fa-filter"></i>
+                            <span>Filtros</span>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
+                        </button>
+                        <button id="clearFiltersBtn" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-times"></i>
+                            Limpar
+                        </button>
+                    </div>
+                    
+                    <div class="filters-content" id="filtersContent">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="filterFornecedor">Fornecedor</label>
+                                <input type="text" id="filterFornecedor" placeholder="Buscar fornecedor...">
                             </div>
-                            <div id="selectedDatesDisplay" class="selected-dates"></div>
-                        </div>
-                        <div class="filter-group">
-                            <label for="filterStatus">Status</label>
-                            <select id="filterStatus">
-                                <option value="">Todos</option>
-                                <option value="Não Acatada">Não Acatada</option>
-                                <option value="Acatada">Acatada</option>
-                                <option value="Devolvida">Devolvida</option>
-                            </select>
-                        </div>
-                        <div class="filter-actions">
-                            <label>&nbsp;</label>
-                            <button id="clearFiltersBtn" class="btn btn-secondary">Limpar Filtros</button>
+                            <div class="filter-group">
+                                <label for="filterNF">Número da NF</label>
+                                <input type="text" id="filterNF" placeholder="Buscar nº...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="filterData">Data(s)</label>
+                                <div class="date-picker-container">
+                                    <input type="text" id="filterData" placeholder="Selecionar datas" readonly>
+                                    <button type="button" id="openDatePicker" class="date-picker-btn" title="Selecionar datas">
+                                        <i class="fas fa-calendar"></i>
+                                    </button>
+                                    <input type="date" id="datePickerHelper" class="date-helper">
+                                </div>
+                                <div id="selectedDatesDisplay" class="selected-dates"></div>
+                            </div>
+                            <div class="filter-group">
+                                <label for="filterStatus">Status</label>
+                                <select id="filterStatus">
+                                    <option value="">Todos</option>
+                                    <option value="Não Acatada">Não Acatada</option>
+                                    <option value="Acatada">Acatada</option>
+                                    <option value="Devolvida">Devolvida</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
+            <main class="page-content">
+                <!-- Tabela Desktop -->
+                <div class="table-section desktop-only">
+                    <div class="table-header-info">
+                        <span id="totalNotas" class="total-count">0 notas</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="notasTable" class="notas-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-column="data">
+                                        <div class="th-content">
+                                            Data
+                                            <span class="sort-icon">⇅</span>
+                                        </div>
+                                    </th>
+                                    <th class="sortable" data-column="fornecedor">
+                                        <div class="th-content">
+                                            Fornecedor
+                                            <span class="sort-icon">⇅</span>
+                                        </div>
+                                    </th>
+                                    <th class="sortable" data-column="numero_nf">
+                                        <div class="th-content">
+                                            NF
+                                            <span class="sort-icon">⇅</span>
+                                        </div>
+                                    </th>
+                                    <th class="sortable" data-column="valor">
+                                        <div class="th-content">
+                                            Valor
+                                            <span class="sort-icon">⇅</span>
+                                        </div>
+                                    </th>
+                                    <th class="sortable" data-column="hora_chegada">
+                                        <div class="th-content">
+                                            Chegada
+                                            <span class="sort-icon">⇅</span>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-content">
+                                            Temp.
+                                        </div>
+                                    </th>
+                                    <th class="sortable" data-column="hora_saida">
+                                        <div class="th-content">
+                                            Saída
+                                            <span class="sort-icon">⇅</span>
+                                        </div>
+                                    </th>
+                                    <th class="sortable" data-column="observacao">
+                                        <div class="th-content">
+                                            Observação
+                                            <span class="sort-icon">⇅</span>
+                                        </div>
+                                    </th>
+                                    <th class="sortable" data-column="status">
+                                        <div class="th-content">
+                                            Status
+                                            <span class="sort-icon">⇅</span>
+                                        </div>
+                                    </th>
+                                    <th class="actions-column">
+                                        <div class="th-content">
+                                            Ações
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="notasTableBody">
+                                <!-- Dados serão inseridos via JavaScript -->
+                            </tbody>
+                        </table>
+                        <div id="emptyState" class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                            <h3>Nenhuma nota fiscal cadastrada</h3>
+                            <p>Comece criando sua primeira nota fiscal</p>
+                            <button class="btn btn-primary" onclick="document.getElementById('newNFBtn').click()">
+                                <i class="fas fa-plus"></i>
+                                Cadastrar primeira nota
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="table-container">
-                <div class="table-header">
-                    <h2>Notas Fiscais Cadastradas</h2>
-                    <div class="table-info">
-                        <span id="totalNotas">0 notas</span>
+                <!-- Cards Mobile -->
+                <div class="cards-section mobile-only">
+                    <div class="cards-header">
+                        <span id="totalNotasMobile" class="total-count">0 notas</span>
+                    </div>
+                    <div id="notasCards" class="notas-cards">
+                        <!-- Cards serão inseridos via JavaScript -->
+                    </div>
+                    <div id="emptyStateMobile" class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <h3>Nenhuma nota fiscal</h3>
+                        <p>Toque no botão + para criar</p>
                     </div>
                 </div>
-                <div class="table-wrapper">
-                    <table id="notasTable" class="notas-table">
-                        <thead>
-                            <tr>
-                                <th class="sortable" data-column="data">Data <span class="sort-icon">⇅</span></th>
-                                <th class="sortable" data-column="fornecedor">Fornecedor <span class="sort-icon">⇅</span></th>
-                                <th class="sortable" data-column="numero_nf">NF <span class="sort-icon">⇅</span></th>
-                                <th class="sortable" data-column="valor">Valor <span class="sort-icon">⇅</span></th>
-                                <th class="sortable" data-column="hora_chegada">Hora Chegada <span class="sort-icon">⇅</span></th>
-                                <th>Temperatura</th>
-                                <th class="sortable" data-column="hora_saida">Hora Saída <span class="sort-icon">⇅</span></th>
-                                <th class="sortable" data-column="observacao">Observação <span class="sort-icon">⇅</span></th>
-                                <th class="sortable" data-column="status">Status <span class="sort-icon">⇅</span></th>
-                                <th class="actions-column">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="notasTableBody">
-                            <!-- Dados serão inseridos via JavaScript -->
-                        </tbody>
-                    </table>
-                    <div id="emptyState" class="empty-state">
-                        <div class="empty-icon">📋</div>
-                        <p>Nenhuma nota fiscal cadastrada</p>
-                        <button class="btn btn-primary" onclick="document.getElementById('newNFBtn').click()">Cadastrar primeira nota</button>
-                    </div>
-                </div>
-            </div>
-        </main>
+
+                <!-- FAB Mobile -->
+                <button id="fabMobile" class="fab-mobile">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </main>
+        </div>
     </div>
 
     <!-- Modal Nova/Editar Nota Fiscal -->
@@ -151,62 +273,71 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Nova Nota Fiscal</h2>
-                <button class="modal-close" id="closeModal">&times;</button>
+                <button class="modal-close" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <form id="nfForm" class="nf-form">
                 <input type="hidden" id="nfId">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nfData">Data *</label>
-                        <input type="date" id="nfData" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="nfHoraChegada">Hora de Chegada *</label>
-                        <input type="time" id="nfHoraChegada" required>
-                    </div>
-                </div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nfFornecedor">Fornecedor *</label>
-                        <input type="text" id="nfFornecedor" required placeholder="Nome do fornecedor">
+                <div class="form-section">
+                    <h3 class="form-section-title">Informações Básicas</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nfData">Data *</label>
+                            <input type="date" id="nfData" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="nfHoraChegada">Hora de Chegada *</label>
+                            <input type="time" id="nfHoraChegada" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="nfNumero">Número da NF *</label>
-                        <input type="text" id="nfNumero" required placeholder="000.000.000" inputmode="numeric">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nfValor">Valor *</label>
-                        <input type="text" id="nfValor" required placeholder="R$ 0,00" inputmode="decimal">
-                    </div>
-                    <div class="form-group">
-                        <label for="nfTemperatura">Temperatura (°C)</label>
-                        <input type="text" id="nfTemperatura" placeholder="Ex: 5°C">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nfHoraSaida">Hora de Saída</label>
-                        <input type="time" id="nfHoraSaida">
-                    </div>
-                    <div class="form-group" id="statusGroup" style="display: none;">
-                        <label for="nfStatus">Status</label>
-                        <select id="nfStatus">
-                            <option value="Não Acatada">Não Acatada</option>
-                            <option value="Acatada">Acatada</option>
-                            <option value="Devolvida">Devolvida</option>
-                        </select>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nfFornecedor">Fornecedor *</label>
+                            <input type="text" id="nfFornecedor" required placeholder="Nome do fornecedor">
+                        </div>
+                        <div class="form-group">
+                            <label for="nfNumero">Número da NF *</label>
+                            <input type="text" id="nfNumero" required placeholder="000.000.000" inputmode="numeric">
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="nfObservacao">Observação</label>
-                        <textarea id="nfObservacao" placeholder="Ex: Recebeu no dia seguinte, fora do horário, etc..." rows="3"></textarea>
+                <div class="form-section">
+                    <h3 class="form-section-title">Detalhes</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nfValor">Valor *</label>
+                            <input type="text" id="nfValor" required placeholder="R$ 0,00" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="nfTemperatura">Temperatura (°C)</label>
+                            <input type="text" id="nfTemperatura" placeholder="Ex: 5°C">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nfHoraSaida">Hora de Saída</label>
+                            <input type="time" id="nfHoraSaida">
+                        </div>
+                        <div class="form-group" id="statusGroup" style="display: none;">
+                            <label for="nfStatus">Status</label>
+                            <select id="nfStatus">
+                                <option value="Não Acatada">Não Acatada</option>
+                                <option value="Acatada">Acatada</option>
+                                <option value="Devolvida">Devolvida</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="nfObservacao">Observação</label>
+                            <textarea id="nfObservacao" placeholder="Ex: Recebeu no dia seguinte, fora do horário, etc..." rows="3"></textarea>
+                        </div>
                     </div>
                 </div>
 
@@ -223,10 +354,15 @@
         <div class="modal-content modal-small">
             <div class="modal-header">
                 <h2>Confirmar Exclusão</h2>
-                <button class="modal-close" id="closeConfirmModal">&times;</button>
+                <button class="modal-close" id="closeConfirmModal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body">
-                <p>Tem certeza que deseja excluir esta nota fiscal?</p>
+                <div class="confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p class="confirm-text">Tem certeza que deseja excluir esta nota fiscal?</p>
                 <p class="text-muted">Esta ação não pode ser desfeita.</p>
             </div>
             <div class="form-actions">
