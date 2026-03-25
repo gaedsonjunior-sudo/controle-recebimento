@@ -53,21 +53,12 @@
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
-            
+
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active">
                     <i class="fas fa-file-invoice"></i>
                     <span>Notas Fiscais</span>
                 </a>
-                <!-- Estrutura preparada para futuras telas -->
-                <!-- <a href="#" class="nav-item">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Relatórios</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Configurações</span>
-                </a> -->
             </nav>
 
             <div class="sidebar-footer">
@@ -92,7 +83,7 @@
                 <div class="page-header-top">
                     <div class="page-title-section">
                         <h1 class="page-title">Notas Fiscais</h1>
-                        <p class="page-subtitle">Gerenciamento de recebimento e controle</p>
+                        <p class="page-subtitle">Gerenciamento de recebimento</p>
                     </div>
                     <div class="page-actions">
                         <button id="exportReportBtn" class="btn btn-secondary">
@@ -119,7 +110,7 @@
                             Limpar
                         </button>
                     </div>
-                    
+
                     <div class="filters-content" id="filtersContent">
                         <div class="filters-grid">
                             <div class="filter-group">
@@ -166,62 +157,34 @@
                             <thead>
                                 <tr>
                                     <th class="sortable" data-column="data">
-                                        <div class="th-content">
-                                            Data
-                                            <span class="sort-icon">⇅</span>
-                                        </div>
+                                        <div class="th-content">Data <span class="sort-icon">⇅</span></div>
                                     </th>
                                     <th class="sortable" data-column="fornecedor">
-                                        <div class="th-content">
-                                            Fornecedor
-                                            <span class="sort-icon">⇅</span>
-                                        </div>
+                                        <div class="th-content">Fornecedor <span class="sort-icon">⇅</span></div>
                                     </th>
                                     <th class="sortable" data-column="numero_nf">
-                                        <div class="th-content">
-                                            NF
-                                            <span class="sort-icon">⇅</span>
-                                        </div>
+                                        <div class="th-content">NF <span class="sort-icon">⇅</span></div>
                                     </th>
                                     <th class="sortable" data-column="valor">
-                                        <div class="th-content">
-                                            Valor
-                                            <span class="sort-icon">⇅</span>
-                                        </div>
+                                        <div class="th-content">Valor <span class="sort-icon">⇅</span></div>
                                     </th>
                                     <th class="sortable" data-column="hora_chegada">
-                                        <div class="th-content">
-                                            Chegada
-                                            <span class="sort-icon">⇅</span>
-                                        </div>
+                                        <div class="th-content">Chegada <span class="sort-icon">⇅</span></div>
                                     </th>
                                     <th>
-                                        <div class="th-content">
-                                            Temp.
-                                        </div>
+                                        <div class="th-content">Temp.</div>
                                     </th>
                                     <th class="sortable" data-column="hora_saida">
-                                        <div class="th-content">
-                                            Saída
-                                            <span class="sort-icon">⇅</span>
-                                        </div>
+                                        <div class="th-content">Saída <span class="sort-icon">⇅</span></div>
                                     </th>
                                     <th class="sortable" data-column="observacao">
-                                        <div class="th-content">
-                                            Observação
-                                            <span class="sort-icon">⇅</span>
-                                        </div>
+                                        <div class="th-content">Observação <span class="sort-icon">⇅</span></div>
                                     </th>
                                     <th class="sortable" data-column="status">
-                                        <div class="th-content">
-                                            Status
-                                            <span class="sort-icon">⇅</span>
-                                        </div>
+                                        <div class="th-content">Status <span class="sort-icon">⇅</span></div>
                                     </th>
                                     <th class="actions-column">
-                                        <div class="th-content">
-                                            Ações
-                                        </div>
+                                        <div class="th-content">Ações</div>
                                     </th>
                                 </tr>
                             </thead>
@@ -279,7 +242,7 @@
             </div>
             <form id="nfForm" class="nf-form">
                 <input type="hidden" id="nfId">
-                
+
                 <div class="form-section">
                     <h3 class="form-section-title">Informações Básicas</h3>
                     <div class="form-row">
@@ -292,7 +255,7 @@
                             <input type="time" id="nfHoraChegada" required>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="nfFornecedor">Fornecedor *</label>
