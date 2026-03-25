@@ -125,9 +125,6 @@ function setupEventListeners() {
     // Toggle Filtros
     toggleFiltersBtn.addEventListener('click', toggleFilters);
     
-    // Exportar Relatório
-    exportReportBtn.addEventListener('click', exportReport);
-    
     // Sidebar Toggle (mobile)
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
@@ -654,29 +651,6 @@ function clearFilters() {
     renderNotasFiscais(sorted);
 }
 
-// Exportar relatório
-async function exportReport() {
-    try {
-        const table = document.querySelector('.table-section');
-        if (!table) return;
-        
-        const canvas = await html2canvas(table, {
-            scale: 2,
-            backgroundColor: '#ffffff'
-        });
-        
-        const link = document.createElement('a');
-        link.download = `relatorio-notas-fiscais-${new Date().toISOString().split('T')[0]}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
-        
-        console.log('✅ Relatório exportado');
-    } catch (error) {
-        console.error('Erro ao exportar relatório:', error);
-        alert('Erro ao exportar relatório');
-    }
-}
-
 // Formatação
 function formatCurrency(e) {
     let value = e.target.value.replace(/\D/g, '');
@@ -819,7 +793,7 @@ function gerarRelatorioCustom(notas) {
 }
 
 
-/* ===== CONECTAR BOTÃO EXPORTAR ===== */
+// ===== RELATÓRIO FINAL LIMPO =====
 
 function coletarNotasDaTabela() {
     const linhas = document.querySelectorAll("#notasTableBody tr");
@@ -827,12 +801,15 @@ function coletarNotasDaTabela() {
 
     linhas.forEach(tr => {
         const tds = tr.querySelectorAll("td");
-        if (tds.length > 0) {
+
+        if (tds.length) {
             notas.push({
-                data: tds[0]?.innerText,
-                fornecedor: tds[1]?.innerText,
-                valor: parseFloat(tds[3]?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0,
-                status: tds[8]?.innerText // ✅ CORRETO
+                data: tds[0].innerText,
+                fornecedor: tds[1].innerText,
+                valor: parseFloat(
+                    tds[3].innerText.replace(/[^\d,.-]/g, '').replace(',', '.')
+                ) || 0,
+                status: tds[8].innerText // 🔥 ESSENCIAL
             });
         }
     });
@@ -843,29 +820,34 @@ function coletarNotasDaTabela() {
 function gerarRelatorioCustom(notas) {
     const hoje = new Date().toLocaleDateString('pt-BR');
 
-    let total = notas.reduce((acc, n) => acc + (n.valor || 0), 0);
+    let total = notas.reduce((a, n) => a + n.valor, 0);
 
-    let acatadas = notas.filter(n => n.status.includes("Acatada")).length;
-    let naoAcatadas = notas.filter(n => n.status.includes("Não")).length;
-    let devolvidas = notas.filter(n => n.status.includes("Devolvida")).length;
+    let ac = notas.filter(n => n.status.includes("Acatada")).length;
+    let na = notas.filter(n => n.status.includes("Não")).length;
+    let dv = notas.filter(n => n.status.includes("Devolvida")).length;
 
     let html = `
-    <div style="font-family: Arial; padding:30px; width:800px; background:white;">
+    <div style="
+        font-family: Arial;
+        padding: 40px;
+        width: 900px;
+        background: white;
+    ">
         <h2 style="color:#2563eb;">Relatório de Notas Fiscais</h2>
 
-        <p><strong>Data:</strong> ${hoje}</p>
-        <p><strong>Total:</strong> ${notas.length}</p>
-        <p><strong>Valor Total:</strong> R$ ${total.toFixed(2)}</p>
+        <p><b>Data:</b> ${hoje}</p>
+        <p><b>Total:</b> ${notas.length}</p>
+        <p><b>Valor Total:</b> R$ ${total.toFixed(2)}</p>
 
-        <p>✅ Acatadas: ${acatadas}</p>
-        <p>❌ Não Acatadas: ${naoAcatadas}</p>
-        <p>↩️ Devolvidas: ${devolvidas}</p>
+        <p>✅ Acatadas: ${ac}</p>
+        <p>❌ Não Acatadas: ${na}</p>
+        <p>↩️ Devolvidas: ${dv}</p>
 
         <hr>
 
         ${notas.map(n => `
             <div style="margin-bottom:10px;">
-                <strong>${n.fornecedor}</strong><br>
+                <b>${n.fornecedor}</b><br>
                 ${n.data} | R$ ${n.valor.toFixed(2)} | ${n.status}
             </div>
         `).join("")}
@@ -891,9 +873,9 @@ function gerarRelatorioCustom(notas) {
     texto += `📦 Total: ${notas.length}\n`;
     texto += `💰 Valor: R$ ${total.toFixed(2)}\n\n`;
 
-    texto += `✅ Acatadas: ${acatadas}\n`;
-    texto += `❌ Não Acatadas: ${naoAcatadas}\n`;
-    texto += `↩️ Devolvidas: ${devolvidas}\n\n`;
+    texto += `✅ Acatadas: ${ac}\n`;
+    texto += `❌ Não Acatadas: ${na}\n`;
+    texto += `↩️ Devolvidas: ${dv}\n\n`;
 
     notas.forEach(n => {
         texto += `📄 ${n.data} | ${n.fornecedor} | R$ ${n.valor.toFixed(2)} | ${n.status}\n`;
@@ -902,7 +884,15 @@ function gerarRelatorioCustom(notas) {
     navigator.clipboard.writeText(texto);
 }
 
-document.getElementById("exportReportBtn").addEventListener("click", () => {
-    const notas = coletarNotasDaTabela();
-    gerarRelatorioCustom(notas);
+// BOTÃO
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("exportReportBtn");
+
+    if (btn) {
+        btn.onclick = () => {
+            const notas = coletarNotasDaTabela();
+            gerarRelatorioCustom(notas);
+        };
+    }
 });
+
