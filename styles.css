@@ -531,14 +531,15 @@ body {
     border-radius: var(--radius-lg);
     border: 1px solid var(--gray-200);
     overflow: hidden;
-    align-items: center;
-    text-align: center;
+    align-items: center;   
 }
 
 .table-header-info {
     padding: var(--spacing-3) var(--spacing-5);
     border-bottom: 1px solid var(--gray-200);
     background: var(--gray-50);
+    align-items: center; 
+    text-align: center;
 }
 
 .total-count {
@@ -591,7 +592,6 @@ body {
 .th-content {
     display: flex;
     align-items: center;
-    text-align: center;
     gap: 4px;
 }
 
