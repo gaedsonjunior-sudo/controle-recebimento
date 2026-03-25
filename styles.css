@@ -1475,15 +1475,3 @@ input[type="time"] {
 .form-row {
     grid-template-columns: 1fr !important;
 }
-
-.user-name,
-.user-role {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.content {
-    width: 100%;
-    max-width: 100%;
-}
