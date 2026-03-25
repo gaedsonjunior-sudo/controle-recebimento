@@ -831,12 +831,8 @@ function coletarNotasDaTabela() {
             notas.push({
                 data: tds[0]?.innerText,
                 fornecedor: tds[1]?.innerText,
-                numero_nf: tds[2]?.innerText,
                 valor: parseFloat(tds[3]?.innerText.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0,
-                hora_chegada: tds[4]?.innerText,
-                temperatura: tds[5]?.innerText,
-                hora_saida: tds[6]?.innerText,
-                status: tds[7]?.innerText
+                status: tds[8]?.innerText // ✅ CORRETO
             });
         }
     });
@@ -844,12 +840,69 @@ function coletarNotasDaTabela() {
     return notas;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("exportReportBtn");
-    if (btn) {
-        btn.addEventListener("click", () => {
-            const notas = coletarNotasDaTabela();
-            gerarRelatorioCustom(notas);
-        });
-    }
+function gerarRelatorioCustom(notas) {
+    const hoje = new Date().toLocaleDateString('pt-BR');
+
+    let total = notas.reduce((acc, n) => acc + (n.valor || 0), 0);
+
+    let acatadas = notas.filter(n => n.status.includes("Acatada")).length;
+    let naoAcatadas = notas.filter(n => n.status.includes("Não")).length;
+    let devolvidas = notas.filter(n => n.status.includes("Devolvida")).length;
+
+    let html = `
+    <div style="font-family: Arial; padding:30px; width:800px; background:white;">
+        <h2 style="color:#2563eb;">Relatório de Notas Fiscais</h2>
+
+        <p><strong>Data:</strong> ${hoje}</p>
+        <p><strong>Total:</strong> ${notas.length}</p>
+        <p><strong>Valor Total:</strong> R$ ${total.toFixed(2)}</p>
+
+        <p>✅ Acatadas: ${acatadas}</p>
+        <p>❌ Não Acatadas: ${naoAcatadas}</p>
+        <p>↩️ Devolvidas: ${devolvidas}</p>
+
+        <hr>
+
+        ${notas.map(n => `
+            <div style="margin-bottom:10px;">
+                <strong>${n.fornecedor}</strong><br>
+                ${n.data} | R$ ${n.valor.toFixed(2)} | ${n.status}
+            </div>
+        `).join("")}
+    </div>
+    `;
+
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.left = "-9999px";
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    html2canvas(container.firstChild, { scale: 2 }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "relatorio.png";
+        link.href = canvas.toDataURL();
+        link.click();
+        document.body.removeChild(container);
+    });
+
+    let texto = `📊 *Relatório de Notas Fiscais*\n\n`;
+    texto += `📅 Data: ${hoje}\n`;
+    texto += `📦 Total: ${notas.length}\n`;
+    texto += `💰 Valor: R$ ${total.toFixed(2)}\n\n`;
+
+    texto += `✅ Acatadas: ${acatadas}\n`;
+    texto += `❌ Não Acatadas: ${naoAcatadas}\n`;
+    texto += `↩️ Devolvidas: ${devolvidas}\n\n`;
+
+    notas.forEach(n => {
+        texto += `📄 ${n.data} | ${n.fornecedor} | R$ ${n.valor.toFixed(2)} | ${n.status}\n`;
+    });
+
+    navigator.clipboard.writeText(texto);
+}
+
+document.getElementById("exportReportBtn").addEventListener("click", () => {
+    const notas = coletarNotasDaTabela();
+    gerarRelatorioCustom(notas);
 });
