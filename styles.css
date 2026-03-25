@@ -720,13 +720,13 @@ body {
 }
 
 .status-badge.nao-acatada {
-    background: var(--warning-50);
-    color: var(--warning-700);
+    background: var(--danger-50);
+    color: var(--danger-700);
 }
 
 .status-badge.devolvida {
-    background: var(--danger-50);
-    color: var(--danger-700);
+    background: var(--warning-50);
+    color: var(--warning-700);
 }
 
 /* Empty State */
