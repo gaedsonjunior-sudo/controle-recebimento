@@ -850,7 +850,7 @@ body {
 
 /* FAB Mobile */
 .fab-mobile {
-    display: none;
+    display: flex;
     position: fixed;
     bottom: var(--spacing-6);
     right: var(--spacing-6);
@@ -864,6 +864,8 @@ body {
     cursor: pointer;
     z-index: 1000;
     transition: all 0.2s;
+    align-items: center;
+    justify-content: center;
 }
 
 .fab-mobile:hover {
