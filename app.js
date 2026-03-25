@@ -697,13 +697,13 @@ async function exportReport() {
                     <div style="font-size:22px; font-weight:700; color:#16a34a;">${qtdAcatadas}</div>
                     <div style="font-size:11px; color:#15803d; margin-top:2px; font-weight:500;">ACATADAS</div>
                 </div>
-                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:22px; font-weight:700; color:#d97706;">${qtdNaoAcatadas}</div>
-                    <div style="font-size:11px; color:#b45309; margin-top:2px; font-weight:500;">NÃO ACATADAS</div>
-                </div>
                 <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:22px; font-weight:700; color:#dc2626;">${qtdDevolvidas}</div>
-                    <div style="font-size:11px; color:#b91c1c; margin-top:2px; font-weight:500;">DEVOLVIDAS</div>
+                    <div style="font-size:22px; font-weight:700; color:#dc2626;">${qtdNaoAcatadas}</div>
+                    <div style="font-size:11px; color:#b91c1c; margin-top:2px; font-weight:500;">NÃO ACATADAS</div>
+                </div>
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:14px; text-align:center;">
+                    <div style="font-size:22px; font-weight:700; color:#d97706;">${qtdDevolvidas}</div>
+                    <div style="font-size:11px; color:#b45309; margin-top:2px; font-weight:500;">DEVOLVIDAS</div>
                 </div>
             </div>
 
@@ -722,8 +722,8 @@ async function exportReport() {
                         const bgRow = i % 2 === 0 ? '#ffffff' : '#f8fafc';
                         let statusBg = '#f0f9ff', statusColor = '#0369a1';
                         if (n.status === 'Acatada')      { statusBg = '#f0fdf4'; statusColor = '#15803d'; }
-                        if (n.status === 'Não Acatada')  { statusBg = '#fffbeb'; statusColor = '#b45309'; }
-                        if (n.status === 'Devolvida')    { statusBg = '#fef2f2'; statusColor = '#b91c1c'; }
+                        if (n.status === 'Não Acatada')  { statusBg = '#fef2f2'; statusColor = '#b91c1c'; }
+                        if (n.status === 'Devolvida')    { statusBg = '#fffbeb'; statusColor = '#b45309'; }
                         return `
                             <tr style="background:${bgRow};">
                                 <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; color:#475569;">${n.data}</td>
