@@ -124,6 +124,9 @@ function setupEventListeners() {
     
     // Toggle Filtros
     toggleFiltersBtn.addEventListener('click', toggleFilters);
+
+    // Exportar Relatório
+    exportReportBtn.addEventListener('click', exportReport);
     
     // Sidebar Toggle (mobile)
     const sidebarToggle = document.getElementById('sidebarToggle');
