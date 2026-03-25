@@ -560,6 +560,8 @@ body {
     border-collapse: collapse;
     font-size: 11.5px;
     table-layout: fixed;
+    align-items: center;
+    text-align: center;
 }
 
 .notas-table thead {
