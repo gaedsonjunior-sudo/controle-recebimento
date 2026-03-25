@@ -222,7 +222,8 @@ body {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 200px !important;
+    width: 220px; /* 👈 aumentei um pouco */
+    min-width: 220px;
     background: white;
     border-right: 1px solid var(--gray-200);
     display: flex;
@@ -678,13 +679,14 @@ body {
 
 /* Status Badge */
 .status-badge {
-    display: inline-flex;
+    display: inline-block;
     padding: var(--spacing-1) var(--spacing-3);
     border-radius: var(--radius-full);
     font-size: var(--text-xs);
     font-weight: var(--font-medium);
     text-transform: uppercase;
     letter-spacing: 0.025em;
+    white-space: nowrap;
 }
 
 .status-badge.acatada {
@@ -1392,12 +1394,9 @@ textarea {
 
 /* ===== AJUSTES SaaS (AUTO) ===== */
 
-.sidebar { width: 180px !important; }
-
-.content { 
-   padding: 16px !important;
-   width: 100%;
-   max-width: 100%;
+.content {
+    margin-left: 220px; /* 👈 MESMO valor da sidebar */
+    width: calc(100% - 220px);
 }
 
 #notasTable {
@@ -1438,7 +1437,9 @@ textarea {
 #notasTable td:nth-child(6) { width: 70px; }
 
 #notasTable th:nth-child(8),
-#notasTable td:nth-child(8) { width: 140px; }
+#notasTable td:nth-child(8) {
+    width: 160px;
+}
 
 #notasTable th:nth-child(9),
 #notasTable td:nth-child(9) { width: 90px; }
