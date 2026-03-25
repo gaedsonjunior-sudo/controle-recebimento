@@ -222,7 +222,7 @@ body {
     left: 0;
     top: 0;
     bottom: 0;
-    width: var(--sidebar-width);
+    width: 200px !important;
     background: white;
     border-right: 1px solid var(--gray-200);
     display: flex;
@@ -359,6 +359,9 @@ body {
     font-size: var(--text-xs);
     color: var(--gray-500);
     text-transform: capitalize;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .btn-logout {
@@ -1391,7 +1394,11 @@ textarea {
 
 .sidebar { width: 180px !important; }
 
-.content { padding: 16px !important; }
+.content { 
+   padding: 16px !important;
+   width: 100%;
+   max-width: 100%;
+}
 
 #notasTable {
     table-layout: fixed;
@@ -1431,7 +1438,7 @@ textarea {
 #notasTable td:nth-child(6) { width: 70px; }
 
 #notasTable th:nth-child(8),
-#notasTable td:nth-child(8) { width: 120px; }
+#notasTable td:nth-child(8) { width: 140px; }
 
 #notasTable th:nth-child(9),
 #notasTable td:nth-child(9) { width: 90px; }
@@ -1469,10 +1476,6 @@ input[type="time"] {
     grid-template-columns: 1fr !important;
 }
 
-.sidebar {
-    width: 200px !important;
-}
-
 .user-name,
 .user-role {
     white-space: nowrap;
@@ -1483,9 +1486,4 @@ input[type="time"] {
 .content {
     width: 100%;
     max-width: 100%;
-}
-
-#notasTable th:nth-child(8),
-#notasTable td:nth-child(8) {
-    width: 140px;
 }
