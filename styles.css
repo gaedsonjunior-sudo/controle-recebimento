@@ -850,7 +850,7 @@ body {
 
 /* FAB Mobile */
 .fab-mobile {
-    display: none;
+    display: flex;
     position: fixed;
     bottom: var(--spacing-6);
     right: var(--spacing-6);
@@ -864,6 +864,8 @@ body {
     cursor: pointer;
     z-index: 1000;
     transition: all 0.2s;
+    align-items: center;
+    justify-content: center;
 }
 
 .fab-mobile:hover {
@@ -1465,4 +1467,25 @@ input[type="time"] {
 
 .form-row {
     grid-template-columns: 1fr !important;
+}
+
+.sidebar {
+    width: 200px !important;
+}
+
+.user-name,
+.user-role {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.content {
+    width: 100%;
+    max-width: 100%;
+}
+
+#notasTable th:nth-child(8),
+#notasTable td:nth-child(8) {
+    width: 140px;
 }
