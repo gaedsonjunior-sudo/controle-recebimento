@@ -776,3 +776,44 @@ function formatDate(dateString) {
 window.editNotaFiscal = editNotaFiscal;
 window.confirmDelete = confirmDelete;
 window.removeDate = removeDate;
+
+
+/* ===== NOVO RELATÓRIO ===== */
+
+function gerarRelatorioCustom(notas) {
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    let total = notas.reduce((acc, n) => acc + (parseFloat(n.valor) || 0), 0);
+
+    let html = `
+    <div style="font-family: Arial; padding:20px; width:600px; background:white;">
+        <h2 style="color:#2563eb;">Relatório de Notas Fiscais</h2>
+        <p><strong>Data:</strong> ${hoje}</p>
+        <p><strong>Total de notas:</strong> ${notas.length}</p>
+        <p><strong>Valor total:</strong> R$ ${total.toFixed(2)}</p>
+        <hr>
+        ${notas.map(n => `
+            <div style="margin-bottom:10px;">
+                <strong>${n.fornecedor}</strong><br>
+                NF: ${n.numero_nf} | 
+                Valor: R$ ${n.valor} | 
+                Status: ${n.status}
+            </div>
+        `).join("")}
+    </div>
+    `;
+
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    html2canvas(container).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "relatorio.png";
+        link.href = canvas.toDataURL();
+        link.click();
+        document.body.removeChild(container);
+    });
+
+    const texto = `📊 *Relatório de Notas Fiscais*\n📅 Data: ${hoje}\n📦 Quantidade: ${notas.length}\n💰 Total: R$ ${total.toFixed(2)}`;
+    navigator.clipboard.writeText(texto);
+}

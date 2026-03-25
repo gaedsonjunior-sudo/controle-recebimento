@@ -1383,3 +1383,86 @@ textarea {
     white-space: nowrap;
     border-width: 0;
 }
+
+
+/* ===== AJUSTES SaaS (AUTO) ===== */
+
+.sidebar { width: 180px !important; }
+
+.content { padding: 16px !important; }
+
+#notasTable {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 12px;
+}
+
+#notasTable th,
+#notasTable td {
+    padding: 6px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#notasTable th:nth-child(1),
+#notasTable td:nth-child(1) { width: 80px; }
+
+#notasTable th:nth-child(2),
+#notasTable td:nth-child(2) { width: 140px; text-align:left; }
+
+#notasTable th:nth-child(3),
+#notasTable td:nth-child(3) { width: 80px; }
+
+#notasTable th:nth-child(4),
+#notasTable td:nth-child(4) {
+    width: 90px;
+    white-space: nowrap;
+}
+
+#notasTable th:nth-child(5),
+#notasTable td:nth-child(5),
+#notasTable th:nth-child(7),
+#notasTable td:nth-child(7) { width: 80px; }
+
+#notasTable th:nth-child(6),
+#notasTable td:nth-child(6) { width: 70px; }
+
+#notasTable th:nth-child(8),
+#notasTable td:nth-child(8) { width: 120px; }
+
+#notasTable th:nth-child(9),
+#notasTable td:nth-child(9) { width: 90px; }
+
+.controls {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+input, select, textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+input[type="date"],
+input[type="time"] {
+    width: 100%;
+    min-width: 0;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 16px;
+}
+
+.form-row {
+    grid-template-columns: 1fr !important;
+}
