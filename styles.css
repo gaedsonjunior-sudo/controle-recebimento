@@ -531,15 +531,12 @@ body {
     border-radius: var(--radius-lg);
     border: 1px solid var(--gray-200);
     overflow: hidden;
-    align-items: center;   
 }
 
 .table-header-info {
     padding: var(--spacing-3) var(--spacing-5);
     border-bottom: 1px solid var(--gray-200);
     background: var(--gray-50);
-    align-items: center; 
-    text-align: center;
 }
 
 .total-count {
@@ -560,7 +557,6 @@ body {
     border-collapse: collapse;
     font-size: 11.5px;
     table-layout: fixed;
-    align-items: center;    
 }
 
 .notas-table thead {
@@ -568,12 +564,11 @@ body {
     top: 0;
     background: var(--gray-50);
     z-index: 10;
-    align-items: center;  
 }
 
 .notas-table th {
     padding: 7px 5px;
-    text-align: left;
+    text-align: center;
     font-weight: var(--font-semibold);
     color: var(--gray-700);
     border-bottom: 1px solid var(--gray-200);
@@ -622,6 +617,12 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-align: center;
+}
+
+/* Fornecedor: alinhado à esquerda */
+.notas-table td:nth-child(2) {
+    text-align: left;
 }
 
 /* Larguras fixas para caber sem scroll */
@@ -666,7 +667,6 @@ body {
 
 .actions-column {
     text-align: center;
-    align-items: center;
 }
 
 .action-buttons {
@@ -721,18 +721,18 @@ body {
 }
 
 .status-badge.acatada {
-    background: var(--success-50);
-    color: var(--success-700);
+    background: #f0fdf4;
+    color: #15803d;
 }
 
 .status-badge.nao-acatada {
-    background: var(--danger-50);
-    color: var(--danger-700);
+    background: #fef2f2;
+    color: #b91c1c;
 }
 
 .status-badge.devolvida {
-    background: var(--warning-50);
-    color: var(--warning-700);
+    background: #fffbeb;
+    color: #b45309;
 }
 
 /* Empty State */

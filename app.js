@@ -630,30 +630,91 @@ function clearFilters() {
 }
 
 // ========================================
+// TOAST DE NOTIFICAÇÃO
+// ========================================
+function showToast(msg, tipo = 'success') {
+    // Remove toast anterior se existir
+    const existing = document.getElementById('appToast');
+    if (existing) existing.remove();
+
+    const bgMap = {
+        success: '#16a34a',
+        info:    '#0284c7',
+        error:   '#dc2626'
+    };
+
+    const toast = document.createElement('div');
+    toast.id = 'appToast';
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: ${bgMap[tipo] || bgMap.success};
+        color: white;
+        padding: 12px 22px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: 'Inter', sans-serif;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        white-space: nowrap;
+        max-width: 90vw;
+        text-align: center;
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+
+    // Animar entrada
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        });
+    });
+
+    // Remover após 3.5s
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+
+// ========================================
 // EXPORTAR RELATÓRIO PROFISSIONAL
 // ========================================
 async function exportReport() {
     // Coletar notas visíveis na tabela (respeita filtros ativos)
+    // Usa o array notasFiscais filtrado via DOM para garantir contagem correta
     const linhas = document.querySelectorAll('#notasTableBody tr');
     const notas = [];
 
     linhas.forEach(tr => {
         const tds = tr.querySelectorAll('td');
         if (tds.length > 0) {
+            // Status: lê o data-id da linha e busca no array notasFiscais para garantir valor correto
+            const rowId = tr.getAttribute('data-id');
+            const notaOriginal = notasFiscais.find(n => n.id === rowId);
+            const statusReal = notaOriginal ? notaOriginal.status : (tds[8]?.querySelector('.status-badge')?.innerText?.trim() || '');
+
             notas.push({
                 data: tds[0]?.innerText?.trim() || '',
                 fornecedor: tds[1]?.innerText?.trim() || '',
                 numero_nf: tds[2]?.innerText?.trim() || '',
                 valor: tds[3]?.innerText?.trim() || '',
-                hora_chegada: tds[4]?.innerText?.trim() || '',
-                temperatura: tds[5]?.innerText?.trim() || '',
-                hora_saida: tds[6]?.innerText?.trim() || '',
-                observacao: tds[7]?.innerText?.trim() || '',
-                // Coluna 9 (índice 8) é o status real
-                status: tds[8]?.querySelector('.status-badge')?.innerText?.trim() || tds[8]?.innerText?.trim() || ''
+                status: statusReal
             });
         }
     });
+
+    if (notas.length === 0) {
+        showToast('Nenhuma nota para exportar.', 'info');
+        return;
+    }
 
     const hoje = new Date().toLocaleDateString('pt-BR');
     const valorTotal = notas.reduce((acc, n) => {
@@ -661,9 +722,19 @@ async function exportReport() {
         return acc + v;
     }, 0);
 
-    const qtdAcatadas   = notas.filter(n => n.status === 'Acatada').length;
+    // Contagem correta diretamente do array
+    const qtdAcatadas    = notas.filter(n => n.status === 'Acatada').length;
     const qtdNaoAcatadas = notas.filter(n => n.status === 'Não Acatada').length;
     const qtdDevolvidas  = notas.filter(n => n.status === 'Devolvida').length;
+
+    // Helper de cor dos badges no relatório
+    // Acatada=verde, Não Acatada=vermelho, Devolvida=amarelo/âmbar
+    function statusStyle(status) {
+        if (status === 'Acatada')     return { bg: '#f0fdf4', color: '#15803d' };
+        if (status === 'Não Acatada') return { bg: '#fef2f2', color: '#b91c1c' };
+        if (status === 'Devolvida')   return { bg: '#fffbeb', color: '#b45309' };
+        return { bg: '#f0f9ff', color: '#0369a1' };
+    }
 
     // ---- Montar HTML do relatório profissional ----
     const reportHTML = `
@@ -687,23 +758,23 @@ async function exportReport() {
                 </div>
             </div>
 
-            <!-- Resumo -->
+            <!-- Resumo — 4 cards com cores corretas -->
             <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:32px;">
                 <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:22px; font-weight:700; color:#0284c7;">${notas.length}</div>
-                    <div style="font-size:11px; color:#0369a1; margin-top:2px; font-weight:500;">TOTAL</div>
+                    <div style="font-size:24px; font-weight:700; color:#0284c7;">${notas.length}</div>
+                    <div style="font-size:11px; color:#0369a1; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Total</div>
                 </div>
                 <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:22px; font-weight:700; color:#16a34a;">${qtdAcatadas}</div>
-                    <div style="font-size:11px; color:#15803d; margin-top:2px; font-weight:500;">ACATADAS</div>
+                    <div style="font-size:24px; font-weight:700; color:#16a34a;">${qtdAcatadas}</div>
+                    <div style="font-size:11px; color:#15803d; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Acatadas</div>
                 </div>
                 <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:22px; font-weight:700; color:#dc2626;">${qtdNaoAcatadas}</div>
-                    <div style="font-size:11px; color:#b91c1c; margin-top:2px; font-weight:500;">NÃO ACATADAS</div>
+                    <div style="font-size:24px; font-weight:700; color:#dc2626;">${qtdNaoAcatadas}</div>
+                    <div style="font-size:11px; color:#b91c1c; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Não Acatadas</div>
                 </div>
                 <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:22px; font-weight:700; color:#d97706;">${qtdDevolvidas}</div>
-                    <div style="font-size:11px; color:#b45309; margin-top:2px; font-weight:500;">DEVOLVIDAS</div>
+                    <div style="font-size:24px; font-weight:700; color:#d97706;">${qtdDevolvidas}</div>
+                    <div style="font-size:11px; color:#b45309; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Devolvidas</div>
                 </div>
             </div>
 
@@ -711,26 +782,23 @@ async function exportReport() {
             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <thead>
                     <tr style="background:#f1f5f9;">
-                        <th style="padding:10px 8px; text-align:left; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:80px;">Data</th>
+                        <th style="padding:10px 8px; text-align:center; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:80px;">Data</th>
                         <th style="padding:10px 8px; text-align:left; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600;">Fornecedor</th>
-                        <th style="padding:10px 8px; text-align:right; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:100px;">Valor</th>
-                        <th style="padding:10px 8px; text-align:center; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:95px;">Status</th>
+                        <th style="padding:10px 8px; text-align:right; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:105px;">Valor</th>
+                        <th style="padding:10px 8px; text-align:center; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:100px;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${notas.map((n, i) => {
                         const bgRow = i % 2 === 0 ? '#ffffff' : '#f8fafc';
-                        let statusBg = '#f0f9ff', statusColor = '#0369a1';
-                        if (n.status === 'Acatada')      { statusBg = '#f0fdf4'; statusColor = '#15803d'; }
-                        if (n.status === 'Não Acatada')  { statusBg = '#fef2f2'; statusColor = '#b91c1c'; }
-                        if (n.status === 'Devolvida')    { statusBg = '#fffbeb'; statusColor = '#b45309'; }
+                        const s = statusStyle(n.status);
                         return `
                             <tr style="background:${bgRow};">
-                                <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; color:#475569;">${n.data}</td>
+                                <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; color:#475569; text-align:center;">${n.data}</td>
                                 <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; color:#0f172a; font-weight:500;">${n.fornecedor}</td>
                                 <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; text-align:right; color:#0f172a; font-weight:600;">${n.valor}</td>
                                 <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; text-align:center;">
-                                    <span style="background:${statusBg}; color:${statusColor}; padding:3px 8px; border-radius:999px; font-size:10px; font-weight:600; white-space:nowrap;">${n.status}</span>
+                                    <span style="background:${s.bg}; color:${s.color}; padding:3px 9px; border-radius:999px; font-size:10px; font-weight:700; white-space:nowrap; display:inline-block;">${n.status}</span>
                                 </td>
                             </tr>
                         `;
@@ -745,13 +813,15 @@ async function exportReport() {
         </div>
     `;
 
-    // Inserir no body (fora da tela visível)
+    // Inserir no body fora da tela visível
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'position:fixed; left:-9999px; top:0; z-index:-1;';
     wrapper.innerHTML = reportHTML;
     document.body.appendChild(wrapper);
 
     const container = wrapper.querySelector('#relatorioContainer');
+
+    showToast('⏳ Gerando relatório...', 'info');
 
     try {
         const canvas = await html2canvas(container, {
@@ -772,18 +842,21 @@ async function exportReport() {
         console.log('✅ Relatório exportado');
     } catch (err) {
         console.error('Erro ao gerar imagem:', err);
-        alert('Erro ao gerar o relatório. Verifique o console.');
-    } finally {
+        showToast('❌ Erro ao gerar o relatório. Verifique o console.', 'error');
         document.body.removeChild(wrapper);
+        return;
     }
 
+    document.body.removeChild(wrapper);
+
     // ---- Texto para WhatsApp ----
+    const valorFmt = 'R$ ' + valorTotal.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
     const listaTexto = notas.map(n => `${n.data} | ${n.fornecedor} | ${n.valor} | ${n.status}`).join('\n');
     const textoWhatsApp =
 `📊 *Relatório de Notas Fiscais*
 📅 Data: ${hoje}
 📦 Total: ${notas.length}
-💰 Valor: R$ ${valorTotal.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}
+💰 Valor: ${valorFmt}
 ✅ Acatadas: ${qtdAcatadas}
 ❌ Não Acatadas: ${qtdNaoAcatadas}
 ↩️ Devolvidas: ${qtdDevolvidas}
@@ -794,10 +867,9 @@ ${listaTexto}`;
 
     try {
         await navigator.clipboard.writeText(textoWhatsApp);
-        console.log('✅ Texto copiado para a área de transferência');
+        showToast('✅ Relatório salvo e texto copiado para o WhatsApp!', 'success');
     } catch {
-        // Fallback silencioso se clipboard não disponível
-        console.warn('Não foi possível copiar para a área de transferência');
+        showToast('✅ Relatório salvo! (texto não copiado — permissão negada)', 'success');
     }
 }
 
