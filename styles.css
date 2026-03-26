@@ -589,7 +589,13 @@ body {
 .th-content {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
+}
+
+/* Cabeçalho Fornecedor alinhado à esquerda */
+.notas-table th:nth-child(2) .th-content {
+    justify-content: flex-start;
 }
 
 .sort-icon {
