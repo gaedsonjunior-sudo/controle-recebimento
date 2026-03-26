@@ -158,7 +158,7 @@ function setupEventListeners() {
     document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
     document.getElementById('filterNF').addEventListener('input', applyFilters);
     document.getElementById('openDatePicker').addEventListener('click', openDatePicker);
-    document.getElementById('datePickerHelper').addEventListener('change', handleDateSelection);
+    document.getElementById('filterData').addEventListener('click', openDatePicker);
     document.getElementById('filterStatus').addEventListener('change', applyFilters);
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
 
@@ -619,11 +619,12 @@ function applyFilters() {
 function clearFilters() {
     document.getElementById('filterFornecedor').value = '';
     document.getElementById('filterNF').value = '';
-    document.getElementById('filterData').value = '';
     document.getElementById('filterStatus').value = '';
 
+    rangeStart = null;
+    rangeEnd   = null;
     selectedDates = [];
-    updateDateDisplay();
+    updateRangeDisplay();
 
     const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
     renderNotasFiscais(sorted);
@@ -907,64 +908,232 @@ function formatNFNumber(value) {
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-// Sistema de múltiplas datas
+// ========================================
+// RANGE DATE PICKER (calendário de período)
+// ========================================
+
+let rangeStart = null;   // string 'YYYY-MM-DD'
+let rangeEnd   = null;
+let calViewYear  = null;
+let calViewMonth = null;
+let calOpen = false;
+
+// Alias mantido para compatibilidade com clearFilters e applyFilters
 let selectedDates = [];
 
 function openDatePicker() {
-    document.getElementById('datePickerHelper').showPicker();
+    const cal = document.getElementById('rangeCalendar');
+    if (calOpen) {
+        closeRangeCalendar();
+        return;
+    }
+    const now = new Date();
+    calViewYear  = now.getFullYear();
+    calViewMonth = now.getMonth();
+    renderCalendar();
+    cal.classList.add('open');
+    calOpen = true;
 }
 
-function handleDateSelection(e) {
-    const selectedDate = e.target.value;
-    if (!selectedDate) return;
+function closeRangeCalendar() {
+    const cal = document.getElementById('rangeCalendar');
+    cal.classList.remove('open');
+    calOpen = false;
+}
 
-    if (!selectedDates.includes(selectedDate)) {
-        selectedDates.push(selectedDate);
-        updateDateDisplay();
-        applyFilters();
+function renderCalendar() {
+    const cal = document.getElementById('rangeCalendar');
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const weekDays = ['D','S','T','Q','Q','S','S'];
+
+    const firstDay = new Date(calViewYear, calViewMonth, 1).getDay();
+    const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+
+    // Build day cells
+    let cells = '';
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+        cells += `<div class="rc-day rc-empty"></div>`;
     }
 
-    e.target.value = '';
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dateObj = new Date(calViewYear, calViewMonth, d);
+
+        let cls = 'rc-day';
+        const isToday = dateObj.getTime() === today.getTime();
+        if (isToday) cls += ' rc-today';
+
+        if (rangeStart && rangeEnd) {
+            const s = new Date(rangeStart + 'T00:00:00');
+            const e = new Date(rangeEnd   + 'T00:00:00');
+            if (dateStr === rangeStart) cls += ' rc-start rc-range-left';
+            else if (dateStr === rangeEnd) cls += ' rc-end rc-range-right';
+            else if (dateObj > s && dateObj < e) cls += ' rc-in-range';
+        } else if (rangeStart && dateStr === rangeStart) {
+            cls += ' rc-start';
+        }
+
+        cells += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
+    }
+
+    const hintText = !rangeStart
+        ? 'Clique no 1º dia'
+        : (!rangeEnd ? 'Clique no último dia' : '');
+
+    cal.innerHTML = `
+        <div class="rc-header">
+            <button type="button" id="rcPrev" title="Mês anterior">&#8249;</button>
+            <span class="rc-month-label">${months[calViewMonth]} ${calViewYear}</span>
+            <button type="button" id="rcNext" title="Próximo mês">&#8250;</button>
+        </div>
+        <div class="rc-weekdays">
+            ${weekDays.map(w => `<div class="rc-weekday">${w}</div>`).join('')}
+        </div>
+        <div class="rc-days" id="rcDaysGrid">
+            ${cells}
+        </div>
+        <div class="rc-footer">
+            <span class="rc-hint">${hintText}</span>
+            <button type="button" class="rc-clear" id="rcClearBtn">Limpar</button>
+        </div>
+    `;
+
+    document.getElementById('rcPrev').addEventListener('click', (e) => {
+        e.stopPropagation();
+        calViewMonth--;
+        if (calViewMonth < 0) { calViewMonth = 11; calViewYear--; }
+        renderCalendar();
+    });
+
+    document.getElementById('rcNext').addEventListener('click', (e) => {
+        e.stopPropagation();
+        calViewMonth++;
+        if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+        renderCalendar();
+    });
+
+    document.getElementById('rcDaysGrid').addEventListener('click', (e) => {
+        const cell = e.target.closest('.rc-day');
+        if (!cell || cell.classList.contains('rc-empty') || cell.classList.contains('rc-other-month')) return;
+        const date = cell.dataset.date;
+        handleRangeClick(date);
+    });
+
+    document.getElementById('rcClearBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        rangeStart = null;
+        rangeEnd   = null;
+        selectedDates = [];
+        updateRangeDisplay();
+        applyFilters();
+        renderCalendar();
+    });
 }
 
-function updateDateDisplay() {
-    const display = document.getElementById('selectedDatesDisplay');
-    const input = document.getElementById('filterData');
+function handleRangeClick(dateStr) {
+    if (!rangeStart || (rangeStart && rangeEnd)) {
+        // Start fresh selection
+        rangeStart = dateStr;
+        rangeEnd   = null;
+    } else {
+        // Second click — set end, ensure order
+        if (dateStr < rangeStart) {
+            rangeEnd   = rangeStart;
+            rangeStart = dateStr;
+        } else if (dateStr === rangeStart) {
+            // Same day — single day selection
+            rangeEnd = dateStr;
+        } else {
+            rangeEnd = dateStr;
+        }
+        // Build selectedDates array with all dates in range
+        buildSelectedDatesFromRange();
+        updateRangeDisplay();
+        applyFilters();
+        // Close after selecting end
+        setTimeout(closeRangeCalendar, 120);
+    }
+    renderCalendar();
+}
 
-    if (selectedDates.length === 0) {
-        display.innerHTML = '';
+function buildSelectedDatesFromRange() {
+    if (!rangeStart || !rangeEnd) { selectedDates = []; return; }
+    const result = [];
+    const cur = new Date(rangeStart + 'T00:00:00');
+    const end = new Date(rangeEnd   + 'T00:00:00');
+    while (cur <= end) {
+        const y = cur.getFullYear();
+        const m = String(cur.getMonth()+1).padStart(2,'0');
+        const d = String(cur.getDate()).padStart(2,'0');
+        result.push(`${y}-${m}-${d}`);
+        cur.setDate(cur.getDate() + 1);
+    }
+    selectedDates = result;
+}
+
+function updateRangeDisplay() {
+    const input   = document.getElementById('filterData');
+    const display = document.getElementById('selectedDatesDisplay');
+
+    if (!rangeStart) {
         input.value = '';
+        display.innerHTML = '';
         return;
     }
 
-    input.value = selectedDates.join(',');
+    if (rangeStart && !rangeEnd) {
+        input.value = formatDate(rangeStart);
+        display.innerHTML = '';
+        return;
+    }
 
-    display.innerHTML = selectedDates
-        .map(date => {
-            const displayDate = formatDate(date);
-            return `
-                <div class="date-tag">
-                    ${displayDate}
-                    <button type="button" onclick="removeDate('${date}')">×</button>
-                </div>
-            `;
-        })
-        .join('');
+    if (rangeStart === rangeEnd) {
+        input.value = formatDate(rangeStart);
+    } else {
+        input.value = `${formatDate(rangeStart)} → ${formatDate(rangeEnd)}`;
+    }
+
+    display.innerHTML = `
+        <div class="date-tag">
+            ${input.value}
+            <button type="button" onclick="clearDateRange()">×</button>
+        </div>
+    `;
 }
 
-function removeDate(date) {
-    selectedDates = selectedDates.filter(d => d !== date);
-    updateDateDisplay();
+function clearDateRange() {
+    rangeStart = null;
+    rangeEnd   = null;
+    selectedDates = [];
+    updateRangeDisplay();
     applyFilters();
 }
 
-function formatDate(dateString) {
-    if (!dateString) return '';
-    const [year, month, day] = dateString.split('-');
-    return `${day}/${month}/${year}`;
+// Legacy: updateDateDisplay called from clearFilters
+function updateDateDisplay() {
+    updateRangeDisplay();
 }
 
+// Close calendar when clicking outside
+document.addEventListener('click', (e) => {
+    if (!calOpen) return;
+    const cal  = document.getElementById('rangeCalendar');
+    const btn  = document.getElementById('openDatePicker');
+    const inp  = document.getElementById('filterData');
+    if (!cal.contains(e.target) && e.target !== btn && e.target !== inp) {
+        closeRangeCalendar();
+    }
+});
+
+// ========================================
+// Tornar funções globais
 // Tornar funções globais
 window.editNotaFiscal = editNotaFiscal;
 window.confirmDelete = confirmDelete;
 window.removeDate = removeDate;
+window.clearDateRange = clearDateRange;

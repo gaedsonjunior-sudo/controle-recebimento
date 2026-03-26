@@ -121,16 +121,16 @@
                                 <label for="filterNF">Número da NF</label>
                                 <input type="text" id="filterNF" placeholder="Buscar nº...">
                             </div>
-                            <div class="filter-group">
-                                <label for="filterData">Data(s)</label>
+                            <div class="filter-group" style="position:relative;">
+                                <label for="filterData">Período</label>
                                 <div class="date-picker-container">
-                                    <input type="text" id="filterData" placeholder="Selecionar datas" readonly>
-                                    <button type="button" id="openDatePicker" class="date-picker-btn" title="Selecionar datas">
+                                    <input type="text" id="filterData" placeholder="Selecionar período" readonly style="cursor:pointer;">
+                                    <button type="button" id="openDatePicker" class="date-picker-btn" title="Selecionar período">
                                         <i class="fas fa-calendar"></i>
                                     </button>
-                                    <input type="date" id="datePickerHelper" class="date-helper">
                                 </div>
                                 <div id="selectedDatesDisplay" class="selected-dates"></div>
+                                <div id="rangeCalendar" class="range-calendar"></div>
                             </div>
                             <div class="filter-group">
                                 <label for="filterStatus">Status</label>
