@@ -32,6 +32,28 @@ const notasTableBody = document.getElementById('notasTableBody');
 const emptyState = document.getElementById('emptyState');
 const totalNotas = document.getElementById('totalNotas');
 
+// ========================================
+// FUNÇÕES DE FORMATAÇÃO (declaradas cedo para hoisting explícito)
+// ========================================
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+}
+
+function formatCurrencyDisplay(value) {
+    if (!value) return 'R$ 0,00';
+    const num = parseFloat(value);
+    return 'R$ ' + num.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+}
+
+function formatNFNumber(value) {
+    if (!value) return '';
+    let numStr = value.toString().replace(/\./g, '');
+    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
@@ -883,12 +905,6 @@ function formatCurrency(e) {
     e.target.value = 'R$ ' + value;
 }
 
-function formatCurrencyDisplay(value) {
-    if (!value) return 'R$ 0,00';
-    const num = parseFloat(value);
-    return 'R$ ' + num.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-}
-
 function parseCurrency(value) {
     if (!value) return 0;
     return parseFloat(value.replace(/[R$\s.]/g, '').replace(',', '.'));
@@ -900,12 +916,6 @@ function formatNF(e) {
         value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
     e.target.value = value;
-}
-
-function formatNFNumber(value) {
-    if (!value) return '';
-    let numStr = value.toString().replace(/\./g, '');
-    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 // ========================================
@@ -1130,8 +1140,12 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// ========================================
-// Tornar funções globais
+function removeDate(date) {
+    selectedDates = selectedDates.filter(d => d !== date);
+    updateRangeDisplay();
+    applyFilters();
+}
+
 // Tornar funções globais
 window.editNotaFiscal = editNotaFiscal;
 window.confirmDelete = confirmDelete;
