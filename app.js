@@ -492,7 +492,7 @@ async function editNotaFiscal(id) {
 
     if (!nota) return;
 
-    document.getElementById('modalTitle').textContent = 'Editar Nota Fiscal';
+    document.getElementById('modalTitle').textContent = isAdmin ? 'Editar Nota Fiscal' : 'Atualizar Nota Fiscal';
     document.getElementById('nfId').value = nota.id;
     document.getElementById('nfData').value = nota.data;
     document.getElementById('nfFornecedor').value = nota.fornecedor;
@@ -503,7 +503,35 @@ async function editNotaFiscal(id) {
     document.getElementById('nfHoraSaida').value = nota.hora_saida || '';
     document.getElementById('nfObservacao').value = nota.observacao || '';
     document.getElementById('nfStatus').value = nota.status;
-    document.getElementById('statusGroup').style.display = 'flex';
+    document.getElementById('statusGroup').style.display = isAdmin ? 'flex' : 'none';
+
+    // Campos bloqueados para fiscal (somente leitura)
+    const fiscalReadonly = !isAdmin;
+    const lockFields = ['nfData', 'nfFornecedor', 'nfNumero', 'nfValor', 'nfHoraChegada', 'nfObservacao'];
+    lockFields.forEach(fid => {
+        const el = document.getElementById(fid);
+        if (fiscalReadonly) {
+            el.setAttribute('readonly', true);
+            el.style.background = '#f8fafc';
+            el.style.color = '#94a3b8';
+            el.style.cursor = 'not-allowed';
+        } else {
+            el.removeAttribute('readonly');
+            el.style.background = '';
+            el.style.color = '';
+            el.style.cursor = '';
+        }
+    });
+
+    // Campos editáveis para fiscal
+    const editableFields = ['nfTemperatura', 'nfHoraSaida'];
+    editableFields.forEach(fid => {
+        const el = document.getElementById(fid);
+        el.removeAttribute('readonly');
+        el.style.background = '';
+        el.style.color = '';
+        el.style.cursor = '';
+    });
 
     nfModal.classList.add('active');
 }
