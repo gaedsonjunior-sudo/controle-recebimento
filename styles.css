@@ -416,6 +416,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 50;
+    overflow: visible;
 }
 
 .page-header-top {
@@ -503,7 +504,8 @@ body {
 }
 
 .filters-content.active {
-    max-height: 300px;
+    max-height: 400px;
+    overflow: visible; /* permite calendário absoluto vazar para fora */
 }
 
 .filters-grid {
@@ -1015,12 +1017,6 @@ textarea {
     color: var(--primary-600);
 }
 
-.date-helper {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-}
-
 .selected-dates {
     margin-top: var(--spacing-2);
     display: flex;
@@ -1048,6 +1044,187 @@ textarea {
     color: var(--primary-600);
     font-size: var(--text-sm);
     line-height: 1;
+}
+
+/* ========================================
+   CALENDÁRIO DE PERÍODO (RANGE PICKER)
+   ======================================== */
+
+.range-calendar {
+    display: none;
+    position: fixed;
+    z-index: 9000;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    padding: 16px;
+    width: 288px;
+    user-select: none;
+    top: 0;
+    left: 0;
+}
+
+.range-calendar.open {
+    display: block;
+    animation: calFadeIn 0.15s ease;
+}
+
+@keyframes calFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.rc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.rc-header button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-600);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.rc-header button:hover {
+    background: var(--gray-100);
+    color: var(--gray-900);
+}
+
+.rc-month-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-900);
+    text-transform: capitalize;
+}
+
+.rc-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 4px;
+}
+
+.rc-weekday {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gray-400);
+    padding: 4px 0;
+    text-transform: uppercase;
+}
+
+.rc-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.rc-day {
+    text-align: center;
+    padding: 6px 2px;
+    font-size: 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--gray-700);
+    transition: background 0.1s, color 0.1s;
+    position: relative;
+}
+
+.rc-day:hover:not(.rc-empty):not(.rc-other-month) {
+    background: var(--primary-100);
+    color: var(--primary-700);
+}
+
+.rc-day.rc-other-month {
+    color: var(--gray-300);
+    cursor: default;
+}
+
+.rc-day.rc-empty {
+    cursor: default;
+}
+
+.rc-day.rc-start,
+.rc-day.rc-end {
+    background: var(--primary-600) !important;
+    color: white !important;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+}
+
+.rc-day.rc-in-range {
+    background: var(--primary-100);
+    color: var(--primary-800);
+    border-radius: 0;
+}
+
+.rc-day.rc-range-left  { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.rc-day.rc-range-right { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+.rc-day.rc-today:not(.rc-start):not(.rc-end) {
+    font-weight: 700;
+    color: var(--primary-600);
+}
+
+.rc-day.rc-today::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--primary-500);
+}
+
+.rc-day.rc-start.rc-today::after,
+.rc-day.rc-end.rc-today::after {
+    background: white;
+}
+
+.rc-footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rc-hint {
+    font-size: 11px;
+    color: var(--gray-400);
+    flex: 1;
+}
+
+.rc-clear {
+    background: none;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.rc-clear:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-300);
 }
 
 /* ========================================
