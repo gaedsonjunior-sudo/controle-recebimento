@@ -605,11 +605,8 @@ async function handleNFSubmit(e) {
 async function deleteNotaFiscal() {
     if (!deleteNFId) return;
 
-    // 👇 pega a role do span
-    const userRole = currentUserRole.textContent.trim();
-
-    // 🚫 bloqueio para Fiscal
-    if (userRole !== 'admin') {
+    // ✅ usa a variável correta
+    if (!isAdmin) {
         alert('Você não tem permissão para excluir notas fiscais.');
         return;
     }
