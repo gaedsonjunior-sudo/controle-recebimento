@@ -344,9 +344,11 @@ function renderNotasFiscais(notas) {
                             <button class="btn-action edit" onclick="editNotaFiscal('${nota.id}')" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn-action delete" onclick="confirmDelete('${nota.id}')" title="Excluir">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            ${isAdmin ? `
+                                <button class="btn-action delete" onclick="confirmDelete('${nota.id}')" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>
@@ -412,9 +414,11 @@ function renderNotasFiscais(notas) {
                             <button class="btn-action edit" onclick="editNotaFiscal('${nota.id}')">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
-                            <button class="btn-action delete" onclick="confirmDelete('${nota.id}')">
-                                <i class="fas fa-trash"></i> Excluir
-                            </button>
+                            ${isAdmin ? `
+                                <button class="btn-action delete" onclick="confirmDelete('${nota.id}')">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                 `;
