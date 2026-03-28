@@ -1046,20 +1046,14 @@ textarea {
 }
 
 /* ── RANGE CALENDAR ──────────────────────────────────────────────── */
-.filter-group {
-    position: relative;
-}
-
 .range-calendar {
     display: none;
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    z-index: 9999;
+    position: fixed;
+    z-index: 99999;
     background: #fff;
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-lg);
-    box-shadow: 0 16px 40px rgba(0,0,0,0.14);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.18);
     padding: 14px;
     width: 272px;
     user-select: none;

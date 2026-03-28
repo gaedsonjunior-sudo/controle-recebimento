@@ -944,12 +944,14 @@ function formatNFNumber(value) {
 }
 
 // ── RANGE DATE PICKER ────────────────────────────────────────────────────────
-let selectedDates  = [];
-let rangeStart     = null;
-let rangeEnd       = null;
-let rcYear         = null;
-let rcMonth        = null;
-let rcIsOpen       = false;
+// O calendário é inserido no <body> para escapar de qualquer overflow:hidden
+let selectedDates = [];
+let rangeStart    = null;
+let rangeEnd      = null;
+let rcYear        = null;
+let rcMonth       = null;
+let rcIsOpen      = false;
+let rcEl          = null; // referência ao elemento do calendário no DOM
 
 function formatDate(d) {
     if (!d) return '';
@@ -957,26 +959,53 @@ function formatDate(d) {
     return `${day}/${m}/${y}`;
 }
 
+// Garante que o elemento existe no body
+function getRcEl() {
+    if (!rcEl || !document.body.contains(rcEl)) {
+        rcEl = document.createElement('div');
+        rcEl.id = 'rangeCalendar';
+        rcEl.className = 'range-calendar';
+        document.body.appendChild(rcEl);
+    }
+    return rcEl;
+}
+
+function positionRcEl() {
+    const btn  = document.getElementById('openDatePicker');
+    const inp  = document.getElementById('filterData');
+    const ref  = btn || inp;
+    if (!ref) return;
+    const rect = ref.getBoundingClientRect();
+    const cal  = getRcEl();
+    const calW = 272;
+    let left = rect.left;
+    // Não sair da tela pela direita
+    if (left + calW > window.innerWidth - 8) left = window.innerWidth - calW - 8;
+    cal.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
+    cal.style.left = (left + window.scrollX) + 'px';
+}
+
 function toggleRangeCal(e) {
+    e.preventDefault();
     e.stopPropagation();
     if (rcIsOpen) { closeRangeCal(); return; }
     openRangeCal();
 }
 
 function openRangeCal() {
-    const cal = document.getElementById('rangeCalendar');
-    if (!cal) return;
     const now = new Date();
     rcYear  = now.getFullYear();
     rcMonth = now.getMonth();
+    const cal = getRcEl();
     renderRangeCal();
+    positionRcEl();
     cal.classList.add('rc-open');
     rcIsOpen = true;
 }
 
 function closeRangeCal() {
-    const cal = document.getElementById('rangeCalendar');
-    if (cal) cal.classList.remove('rc-open');
+    const cal = getRcEl();
+    cal.classList.remove('rc-open');
     rcIsOpen = false;
 }
 
@@ -984,9 +1013,9 @@ function clearRangeState() {
     rangeStart = null;
     rangeEnd   = null;
     selectedDates = [];
-    const inp = document.getElementById('filterData');
-    if (inp) inp.value = '';
+    const inp  = document.getElementById('filterData');
     const disp = document.getElementById('selectedDatesDisplay');
+    if (inp)  inp.value = '';
     if (disp) disp.innerHTML = '';
     if (rcIsOpen) renderRangeCal();
 }
@@ -1005,18 +1034,27 @@ function buildRange(s, e) {
 function updateRangeInput() {
     const inp  = document.getElementById('filterData');
     const disp = document.getElementById('selectedDatesDisplay');
-    if (!rangeStart) { if (inp) inp.value = ''; if (disp) disp.innerHTML = ''; return; }
-    if (!rangeEnd)   { if (inp) inp.value = formatDate(rangeStart); if (disp) disp.innerHTML = ''; return; }
+    if (!rangeStart) {
+        if (inp)  inp.value = '';
+        if (disp) disp.innerHTML = '';
+        return;
+    }
+    if (!rangeEnd) {
+        if (inp) inp.value = formatDate(rangeStart);
+        if (disp) disp.innerHTML = '';
+        return;
+    }
     const label = rangeStart === rangeEnd
         ? formatDate(rangeStart)
         : `${formatDate(rangeStart)} → ${formatDate(rangeEnd)}`;
-    if (inp) inp.value = label;
-    if (disp) disp.innerHTML = `<div class="date-tag">${label}<button type="button" onclick="clearRangeState();applyFilters();">×</button></div>`;
+    if (inp)  inp.value = label;
+    if (disp) disp.innerHTML =
+        `<div class="date-tag">${label}` +
+        `<button type="button" onclick="clearRangeState();applyFilters();">×</button></div>`;
 }
 
 function renderRangeCal() {
-    const cal = document.getElementById('rangeCalendar');
-    if (!cal) return;
+    const cal = getRcEl();
 
     const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1030,40 +1068,39 @@ function renderRangeCal() {
     for (let i = 0; i < first; i++) cells += '<div class="rc-day rc-empty"></div>';
 
     for (let d = 1; d <= total; d++) {
-        const ds  = `${rcYear}-${String(rcMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const dt  = new Date(rcYear, rcMonth, d);
-        let cls   = 'rc-day';
+        const ds = `${rcYear}-${String(rcMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dt = new Date(rcYear, rcMonth, d);
+        let cls  = 'rc-day';
         if (dt.getTime() === today.getTime()) cls += ' rc-today';
 
         if (rangeStart && rangeEnd) {
             const s = new Date(rangeStart + 'T00:00:00');
             const e = new Date(rangeEnd   + 'T00:00:00');
-            if      (ds === rangeStart)    cls += ' rc-start rc-range-left';
-            else if (ds === rangeEnd)      cls += ' rc-end rc-range-right';
-            else if (dt > s && dt < e)     cls += ' rc-in-range';
+            if      (ds === rangeStart)  cls += ' rc-start rc-range-left';
+            else if (ds === rangeEnd)    cls += ' rc-end rc-range-right';
+            else if (dt > s && dt < e)   cls += ' rc-in-range';
         } else if (rangeStart && ds === rangeStart) {
             cls += ' rc-start';
         }
-
         cells += `<div class="${cls}" data-date="${ds}">${d}</div>`;
     }
 
     const hint = !rangeStart ? 'Clique no 1º dia' : (!rangeEnd ? 'Agora clique no último' : '');
 
-    cal.innerHTML = `
-        <div class="rc-header">
-            <button class="rc-nav-btn" id="rcPrev">&#8249;</button>
-            <span class="rc-month-label">${MONTHS[rcMonth]} ${rcYear}</span>
-            <button class="rc-nav-btn" id="rcNext">&#8250;</button>
-        </div>
-        <div class="rc-grid">
-            ${WDAYS.map(w => `<div class="rc-wday">${w}</div>`).join('')}
-            ${cells}
-        </div>
-        <div class="rc-footer">
-            <span class="rc-hint">${hint}</span>
-            <button class="rc-clear-btn" id="rcClear">Limpar</button>
-        </div>`;
+    cal.innerHTML =
+        `<div class="rc-header">` +
+            `<button class="rc-nav-btn" id="rcPrev">&#8249;</button>` +
+            `<span class="rc-month-label">${MONTHS[rcMonth]} ${rcYear}</span>` +
+            `<button class="rc-nav-btn" id="rcNext">&#8250;</button>` +
+        `</div>` +
+        `<div class="rc-grid">` +
+            WDAYS.map(w => `<div class="rc-wday">${w}</div>`).join('') +
+            cells +
+        `</div>` +
+        `<div class="rc-footer">` +
+            `<span class="rc-hint">${hint}</span>` +
+            `<button class="rc-clear-btn" id="rcClear">Limpar</button>` +
+        `</div>`;
 
     cal.querySelector('#rcPrev').onclick = ev => {
         ev.stopPropagation();
@@ -1087,8 +1124,8 @@ function renderRangeCal() {
             if (!rangeStart || (rangeStart && rangeEnd)) {
                 rangeStart = ds; rangeEnd = null;
             } else {
-                if (ds < rangeStart) { rangeEnd = rangeStart; rangeStart = ds; }
-                else                 { rangeEnd = ds; }
+                rangeEnd = ds < rangeStart ? rangeStart : ds;
+                if (ds < rangeStart) rangeStart = ds;
                 selectedDates = buildRange(rangeStart, rangeEnd);
                 updateRangeInput();
                 applyFilters();
@@ -1102,13 +1139,17 @@ function renderRangeCal() {
 // Fechar ao clicar fora
 document.addEventListener('click', ev => {
     if (!rcIsOpen) return;
-    const cal = document.getElementById('rangeCalendar');
+    const cal = getRcEl();
     const btn = document.getElementById('openDatePicker');
     const inp = document.getElementById('filterData');
-    if (cal && !cal.contains(ev.target) && ev.target !== btn && ev.target !== inp) {
+    if (!cal.contains(ev.target) && ev.target !== btn && ev.target !== inp) {
         closeRangeCal();
     }
-});
+}, true);
+
+// Reposicionar ao rolar/redimensionar
+window.addEventListener('scroll', () => { if (rcIsOpen) positionRcEl(); }, true);
+window.addEventListener('resize', () => { if (rcIsOpen) positionRcEl(); });
 
 function updateDateDisplay() { updateRangeInput(); }
 function removeDate() { clearRangeState(); applyFilters(); }
