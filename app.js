@@ -157,8 +157,8 @@ function setupEventListeners() {
     // Filtros
     document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
     document.getElementById('filterNF').addEventListener('input', applyFilters);
-    document.getElementById('openDatePicker').addEventListener('click', openDatePicker);
-    document.getElementById('datePickerHelper').addEventListener('change', handleDateSelection);
+    document.getElementById('openDatePicker').addEventListener('click', toggleRangeCal);
+    document.getElementById('filterData').addEventListener('click', toggleRangeCal);
     document.getElementById('filterStatus').addEventListener('change', applyFilters);
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
 
@@ -726,173 +726,171 @@ function showToast(msg, tipo = 'success') {
 // EXPORTAR RELATÓRIO PROFISSIONAL
 // ========================================
 async function exportReport() {
-    // Coletar notas visíveis na tabela (respeita filtros ativos)
-    // Usa o array notasFiscais filtrado via DOM para garantir contagem correta
     const linhas = document.querySelectorAll('#notasTableBody tr');
-    const notas = [];
+    const notas  = [];
 
     linhas.forEach(tr => {
         const tds = tr.querySelectorAll('td');
-        if (tds.length > 0) {
-            // Status: lê o data-id da linha e busca no array notasFiscais para garantir valor correto
-            const rowId = tr.getAttribute('data-id');
-            const notaOriginal = notasFiscais.find(n => n.id === rowId);
-            const statusReal = notaOriginal ? notaOriginal.status : (tds[8]?.querySelector('.status-badge')?.innerText?.trim() || '');
-
-            notas.push({
-                data: tds[0]?.innerText?.trim() || '',
-                fornecedor: tds[1]?.innerText?.trim() || '',
-                numero_nf: tds[2]?.innerText?.trim() || '',
-                valor: tds[3]?.innerText?.trim() || '',
-                status: statusReal
-            });
-        }
+        if (tds.length === 0) return;
+        const rowId       = tr.getAttribute('data-id');
+        const notaOrig    = notasFiscais.find(n => n.id === rowId);
+        const statusReal  = notaOrig ? notaOrig.status
+                          : (tds[8]?.querySelector('.status-badge')?.innerText?.trim() || '');
+        notas.push({
+            data:       tds[0]?.innerText?.trim() || '',
+            fornecedor: tds[1]?.innerText?.trim() || '',
+            numero_nf:  tds[2]?.innerText?.trim() || '',
+            valor:      tds[3]?.innerText?.trim() || '',
+            status:     statusReal
+        });
     });
 
-    if (notas.length === 0) {
-        showToast('Nenhuma nota para exportar.', 'info');
-        return;
-    }
+    if (notas.length === 0) { showToast('Nenhuma nota para exportar.', 'info'); return; }
 
-    const hoje = new Date().toLocaleDateString('pt-BR');
+    const hoje      = new Date().toLocaleDateString('pt-BR');
     const valorTotal = notas.reduce((acc, n) => {
-        const v = parseFloat(n.valor.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
-        return acc + v;
+        return acc + (parseFloat(n.valor.replace(/[R$\s.]/g, '').replace(',', '.')) || 0);
     }, 0);
-
-    // Contagem correta diretamente do array
     const qtdAcatadas    = notas.filter(n => n.status === 'Acatada').length;
     const qtdNaoAcatadas = notas.filter(n => n.status === 'Não Acatada').length;
     const qtdDevolvidas  = notas.filter(n => n.status === 'Devolvida').length;
 
-    // Helper de cor dos badges no relatório
-    // Acatada=verde, Não Acatada=vermelho, Devolvida=amarelo/âmbar
-    function statusStyle(status) {
-        if (status === 'Acatada')     return { bg: '#f0fdf4', color: '#15803d' };
-        if (status === 'Não Acatada') return { bg: '#fef2f2', color: '#b91c1c' };
-        if (status === 'Devolvida')   return { bg: '#fffbeb', color: '#b45309' };
+    // Período selecionado no filtro
+    const periodoFiltro = (() => {
+        if (rangeStart && rangeEnd && rangeStart !== rangeEnd)
+            return `${formatDate(rangeStart)} a ${formatDate(rangeEnd)}`;
+        if (rangeStart)
+            return formatDate(rangeStart);
+        return 'Todas as datas';
+    })();
+
+    function statusStyle(s) {
+        if (s === 'Acatada')     return { bg: '#f0fdf4', color: '#15803d' };
+        if (s === 'Não Acatada') return { bg: '#fef2f2', color: '#b91c1c' };
+        if (s === 'Devolvida')   return { bg: '#fffbeb', color: '#b45309' };
         return { bg: '#f0f9ff', color: '#0369a1' };
     }
 
-    // ---- Montar HTML do relatório profissional ----
     const reportHTML = `
         <div id="relatorioContainer" style="
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #ffffff;
-            width: 860px;
-            padding: 40px 48px;
-            box-sizing: border-box;
-            color: #1e293b;
+            font-family:'Segoe UI',Arial,sans-serif;
+            background:#ffffff;
+            width:900px;
+            padding:40px 48px;
+            box-sizing:border-box;
+            color:#1e293b;
         ">
             <!-- Cabeçalho -->
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; padding-bottom:24px; border-bottom:2px solid #0284c7;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;
+                        margin-bottom:32px;padding-bottom:24px;border-bottom:2px solid #0284c7;">
                 <div>
-                    <h1 style="margin:0; font-size:22px; font-weight:700; color:#0284c7;">📋 Relatório de Notas Fiscais</h1>
-                    <p style="margin:6px 0 0; font-size:13px; color:#64748b;">Gerado em ${hoje}</p>
+                    <h1 style="margin:0;font-size:22px;font-weight:700;color:#0284c7;">
+                        📋 Relatório de Notas Fiscais
+                    </h1>
+                    <p style="margin:5px 0 0;font-size:12px;color:#64748b;">
+                        Gerado em ${hoje} &nbsp;|&nbsp;
+                        <strong style="color:#0369a1;">Período: ${periodoFiltro}</strong>
+                    </p>
                 </div>
-                <div style="text-align:right; font-size:13px; color:#64748b;">
-                    <strong style="font-size:14px; color:#0f172a;">${notas.length} ${notas.length === 1 ? 'nota' : 'notas'}</strong><br>
-                    Valor total: <strong style="color:#0f172a;">R$ ${valorTotal.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}</strong>
-                </div>
-            </div>
-
-            <!-- Resumo — 4 cards com cores corretas -->
-            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:32px;">
-                <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:24px; font-weight:700; color:#0284c7;">${notas.length}</div>
-                    <div style="font-size:11px; color:#0369a1; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Total</div>
-                </div>
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:24px; font-weight:700; color:#16a34a;">${qtdAcatadas}</div>
-                    <div style="font-size:11px; color:#15803d; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Acatadas</div>
-                </div>
-                <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:24px; font-weight:700; color:#dc2626;">${qtdNaoAcatadas}</div>
-                    <div style="font-size:11px; color:#b91c1c; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Não Acatadas</div>
-                </div>
-                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:14px; text-align:center;">
-                    <div style="font-size:24px; font-weight:700; color:#d97706;">${qtdDevolvidas}</div>
-                    <div style="font-size:11px; color:#b45309; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Devolvidas</div>
+                <div style="text-align:right;font-size:13px;color:#64748b;">
+                    <strong style="font-size:14px;color:#0f172a;">
+                        ${notas.length} ${notas.length === 1 ? 'nota' : 'notas'}
+                    </strong><br>
+                    Valor total:
+                    <strong style="color:#0f172a;">
+                        R$ ${valorTotal.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}
+                    </strong>
                 </div>
             </div>
 
-            <!-- Tabela de notas -->
-            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <!-- Cards resumo -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px;">
+                <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#0284c7;">${notas.length}</div>
+                    <div style="font-size:11px;color:#0369a1;margin-top:4px;font-weight:600;text-transform:uppercase;">Total</div>
+                </div>
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#16a34a;">${qtdAcatadas}</div>
+                    <div style="font-size:11px;color:#15803d;margin-top:4px;font-weight:600;text-transform:uppercase;">Acatadas</div>
+                </div>
+                <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#dc2626;">${qtdNaoAcatadas}</div>
+                    <div style="font-size:11px;color:#b91c1c;margin-top:4px;font-weight:600;text-transform:uppercase;">Não Acatadas</div>
+                </div>
+                <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px;text-align:center;">
+                    <div style="font-size:24px;font-weight:700;color:#d97706;">${qtdDevolvidas}</div>
+                    <div style="font-size:11px;color:#b45309;margin-top:4px;font-weight:600;text-transform:uppercase;">Devolvidas</div>
+                </div>
+            </div>
+
+            <!-- Tabela -->
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
                 <thead>
                     <tr style="background:#f1f5f9;">
-                        <th style="padding:10px 8px; text-align:center; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:80px;">Data</th>
-                        <th style="padding:10px 8px; text-align:left; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600;">Fornecedor</th>
-                        <th style="padding:10px 8px; text-align:right; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:105px;">Valor</th>
-                        <th style="padding:10px 8px; text-align:center; border-bottom:2px solid #e2e8f0; color:#334155; font-weight:600; width:100px;">Status</th>
+                        <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #e2e8f0;color:#334155;font-weight:600;width:78px;">Data</th>
+                        <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #e2e8f0;color:#334155;font-weight:600;">Fornecedor</th>
+                        <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #e2e8f0;color:#334155;font-weight:600;width:80px;">Nº NF</th>
+                        <th style="padding:10px 8px;text-align:right;border-bottom:2px solid #e2e8f0;color:#334155;font-weight:600;width:105px;">Valor</th>
+                        <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #e2e8f0;color:#334155;font-weight:600;width:100px;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${notas.map((n, i) => {
-                        const bgRow = i % 2 === 0 ? '#ffffff' : '#f8fafc';
-                        const s = statusStyle(n.status);
+                        const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+                        const s  = statusStyle(n.status);
                         return `
-                            <tr style="background:${bgRow};">
-                                <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; color:#475569; text-align:center;">${n.data}</td>
-                                <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; color:#0f172a; font-weight:500;">${n.fornecedor}</td>
-                                <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; text-align:right; color:#0f172a; font-weight:600;">${n.valor}</td>
-                                <td style="padding:9px 8px; border-bottom:1px solid #f1f5f9; text-align:center;">
-                                    <span style="background:${s.bg}; color:${s.color}; padding:3px 9px; border-radius:999px; font-size:10px; font-weight:700; white-space:nowrap; display:inline-block;">${n.status}</span>
+                            <tr style="background:${bg};">
+                                <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;color:#475569;text-align:center;">${n.data}</td>
+                                <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;color:#0f172a;font-weight:500;">${n.fornecedor}</td>
+                                <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;color:#475569;text-align:center;">${n.numero_nf}</td>
+                                <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#0f172a;font-weight:600;">${n.valor}</td>
+                                <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:center;">
+                                    <span style="background:${s.bg};color:${s.color};padding:3px 9px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap;display:inline-block;">${n.status}</span>
                                 </td>
-                            </tr>
-                        `;
+                            </tr>`;
                     }).join('')}
                 </tbody>
             </table>
 
             <!-- Rodapé -->
-            <div style="margin-top:32px; padding-top:16px; border-top:1px solid #e2e8f0; font-size:11px; color:#94a3b8; text-align:center;">
+            <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">
                 Relatório gerado automaticamente pelo sistema NF Manager
             </div>
-        </div>
-    `;
+        </div>`;
 
-    // Inserir no body fora da tela visível
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:fixed; left:-9999px; top:0; z-index:-1;';
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-1;';
     wrapper.innerHTML = reportHTML;
     document.body.appendChild(wrapper);
-
     const container = wrapper.querySelector('#relatorioContainer');
 
     showToast('⏳ Gerando relatório...', 'info');
 
     try {
         const canvas = await html2canvas(container, {
-            scale: 2,
-            backgroundColor: '#ffffff',
-            useCORS: true,
-            logging: false,
-            width: container.offsetWidth,
-            height: container.offsetHeight
+            scale: 2, backgroundColor: '#ffffff',
+            useCORS: true, logging: false,
+            width: container.offsetWidth, height: container.offsetHeight
         });
-
-        // Download da imagem
         const link = document.createElement('a');
         link.download = `relatorio-nf-${new Date().toISOString().split('T')[0]}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
-
-        console.log('✅ Relatório exportado');
     } catch (err) {
-        console.error('Erro ao gerar imagem:', err);
-        showToast('❌ Erro ao gerar o relatório. Verifique o console.', 'error');
+        console.error('Erro ao gerar relatório:', err);
+        showToast('❌ Erro ao gerar o relatório.', 'error');
         document.body.removeChild(wrapper);
         return;
     }
 
     document.body.removeChild(wrapper);
 
-    // ---- Texto para WhatsApp ----
-    const valorFmt = 'R$ ' + valorTotal.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-    const listaTexto = notas.map(n => `${n.data} | ${n.fornecedor} | ${n.valor} | ${n.status}`).join('\n');
-    const textoWhatsApp =
+    const valorFmt   = 'R$ ' + valorTotal.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    const listaTexto = notas.map(n => `${n.data} | ${n.fornecedor} | NF ${n.numero_nf} | ${n.valor} | ${n.status}`).join('\n');
+    const textoWA =
 `📊 *Relatório de Notas Fiscais*
-📅 Data: ${hoje}
+📅 Gerado em: ${hoje}
+📆 Período: ${periodoFiltro}
 📦 Total: ${notas.length}
 💰 Valor: ${valorFmt}
 ✅ Acatadas: ${qtdAcatadas}
@@ -900,14 +898,14 @@ async function exportReport() {
 ↩️ Devolvidas: ${qtdDevolvidas}
 
 *Lista:*
-Data | Fornecedor | Valor | Status
+Data | Fornecedor | NF | Valor | Status
 ${listaTexto}`;
 
     try {
-        await navigator.clipboard.writeText(textoWhatsApp);
+        await navigator.clipboard.writeText(textoWA);
         showToast('✅ Relatório salvo e texto copiado para o WhatsApp!', 'success');
     } catch {
-        showToast('✅ Relatório salvo! (texto não copiado — permissão negada)', 'success');
+        showToast('✅ Relatório salvo! (texto não pôde ser copiado)', 'success');
     }
 }
 
@@ -945,64 +943,178 @@ function formatNFNumber(value) {
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-// Sistema de múltiplas datas
-let selectedDates = [];
+// ── RANGE DATE PICKER ────────────────────────────────────────────────────────
+let selectedDates  = [];
+let rangeStart     = null;
+let rangeEnd       = null;
+let rcYear         = null;
+let rcMonth        = null;
+let rcIsOpen       = false;
 
-function openDatePicker() {
-    document.getElementById('datePickerHelper').showPicker();
+function formatDate(d) {
+    if (!d) return '';
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
 }
 
-function handleDateSelection(e) {
-    const selectedDate = e.target.value;
-    if (!selectedDate) return;
+function toggleRangeCal(e) {
+    e.stopPropagation();
+    if (rcIsOpen) { closeRangeCal(); return; }
+    openRangeCal();
+}
 
-    if (!selectedDates.includes(selectedDate)) {
-        selectedDates.push(selectedDate);
-        updateDateDisplay();
+function openRangeCal() {
+    const cal = document.getElementById('rangeCalendar');
+    if (!cal) return;
+    const now = new Date();
+    rcYear  = now.getFullYear();
+    rcMonth = now.getMonth();
+    renderRangeCal();
+    cal.classList.add('rc-open');
+    rcIsOpen = true;
+}
+
+function closeRangeCal() {
+    const cal = document.getElementById('rangeCalendar');
+    if (cal) cal.classList.remove('rc-open');
+    rcIsOpen = false;
+}
+
+function clearRangeState() {
+    rangeStart = null;
+    rangeEnd   = null;
+    selectedDates = [];
+    const inp = document.getElementById('filterData');
+    if (inp) inp.value = '';
+    const disp = document.getElementById('selectedDatesDisplay');
+    if (disp) disp.innerHTML = '';
+    if (rcIsOpen) renderRangeCal();
+}
+
+function buildRange(s, e) {
+    const result = [];
+    const cur = new Date(s + 'T00:00:00');
+    const end = new Date(e + 'T00:00:00');
+    while (cur <= end) {
+        result.push(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
+    }
+    return result;
+}
+
+function updateRangeInput() {
+    const inp  = document.getElementById('filterData');
+    const disp = document.getElementById('selectedDatesDisplay');
+    if (!rangeStart) { if (inp) inp.value = ''; if (disp) disp.innerHTML = ''; return; }
+    if (!rangeEnd)   { if (inp) inp.value = formatDate(rangeStart); if (disp) disp.innerHTML = ''; return; }
+    const label = rangeStart === rangeEnd
+        ? formatDate(rangeStart)
+        : `${formatDate(rangeStart)} → ${formatDate(rangeEnd)}`;
+    if (inp) inp.value = label;
+    if (disp) disp.innerHTML = `<div class="date-tag">${label}<button type="button" onclick="clearRangeState();applyFilters();">×</button></div>`;
+}
+
+function renderRangeCal() {
+    const cal = document.getElementById('rangeCalendar');
+    if (!cal) return;
+
+    const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const WDAYS  = ['D','S','T','Q','Q','S','S'];
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const first = new Date(rcYear, rcMonth, 1).getDay();
+    const total = new Date(rcYear, rcMonth + 1, 0).getDate();
+
+    let cells = '';
+    for (let i = 0; i < first; i++) cells += '<div class="rc-day rc-empty"></div>';
+
+    for (let d = 1; d <= total; d++) {
+        const ds  = `${rcYear}-${String(rcMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dt  = new Date(rcYear, rcMonth, d);
+        let cls   = 'rc-day';
+        if (dt.getTime() === today.getTime()) cls += ' rc-today';
+
+        if (rangeStart && rangeEnd) {
+            const s = new Date(rangeStart + 'T00:00:00');
+            const e = new Date(rangeEnd   + 'T00:00:00');
+            if      (ds === rangeStart)    cls += ' rc-start rc-range-left';
+            else if (ds === rangeEnd)      cls += ' rc-end rc-range-right';
+            else if (dt > s && dt < e)     cls += ' rc-in-range';
+        } else if (rangeStart && ds === rangeStart) {
+            cls += ' rc-start';
+        }
+
+        cells += `<div class="${cls}" data-date="${ds}">${d}</div>`;
+    }
+
+    const hint = !rangeStart ? 'Clique no 1º dia' : (!rangeEnd ? 'Agora clique no último' : '');
+
+    cal.innerHTML = `
+        <div class="rc-header">
+            <button class="rc-nav-btn" id="rcPrev">&#8249;</button>
+            <span class="rc-month-label">${MONTHS[rcMonth]} ${rcYear}</span>
+            <button class="rc-nav-btn" id="rcNext">&#8250;</button>
+        </div>
+        <div class="rc-grid">
+            ${WDAYS.map(w => `<div class="rc-wday">${w}</div>`).join('')}
+            ${cells}
+        </div>
+        <div class="rc-footer">
+            <span class="rc-hint">${hint}</span>
+            <button class="rc-clear-btn" id="rcClear">Limpar</button>
+        </div>`;
+
+    cal.querySelector('#rcPrev').onclick = ev => {
+        ev.stopPropagation();
+        rcMonth--; if (rcMonth < 0) { rcMonth = 11; rcYear--; }
+        renderRangeCal();
+    };
+    cal.querySelector('#rcNext').onclick = ev => {
+        ev.stopPropagation();
+        rcMonth++; if (rcMonth > 11) { rcMonth = 0; rcYear++; }
+        renderRangeCal();
+    };
+    cal.querySelector('#rcClear').onclick = ev => {
+        ev.stopPropagation();
+        clearRangeState();
         applyFilters();
+    };
+    cal.querySelectorAll('.rc-day:not(.rc-empty)').forEach(cell => {
+        cell.onclick = ev => {
+            ev.stopPropagation();
+            const ds = cell.dataset.date;
+            if (!rangeStart || (rangeStart && rangeEnd)) {
+                rangeStart = ds; rangeEnd = null;
+            } else {
+                if (ds < rangeStart) { rangeEnd = rangeStart; rangeStart = ds; }
+                else                 { rangeEnd = ds; }
+                selectedDates = buildRange(rangeStart, rangeEnd);
+                updateRangeInput();
+                applyFilters();
+                setTimeout(closeRangeCal, 150);
+            }
+            renderRangeCal();
+        };
+    });
+}
+
+// Fechar ao clicar fora
+document.addEventListener('click', ev => {
+    if (!rcIsOpen) return;
+    const cal = document.getElementById('rangeCalendar');
+    const btn = document.getElementById('openDatePicker');
+    const inp = document.getElementById('filterData');
+    if (cal && !cal.contains(ev.target) && ev.target !== btn && ev.target !== inp) {
+        closeRangeCal();
     }
+});
 
-    e.target.value = '';
-}
-
-function updateDateDisplay() {
-    const display = document.getElementById('selectedDatesDisplay');
-    const input = document.getElementById('filterData');
-
-    if (selectedDates.length === 0) {
-        display.innerHTML = '';
-        input.value = '';
-        return;
-    }
-
-    input.value = selectedDates.join(',');
-
-    display.innerHTML = selectedDates
-        .map(date => {
-            const displayDate = formatDate(date);
-            return `
-                <div class="date-tag">
-                    ${displayDate}
-                    <button type="button" onclick="removeDate('${date}')">×</button>
-                </div>
-            `;
-        })
-        .join('');
-}
-
-function removeDate(date) {
-    selectedDates = selectedDates.filter(d => d !== date);
-    updateDateDisplay();
-    applyFilters();
-}
-
-function formatDate(dateString) {
-    if (!dateString) return '';
-    const [year, month, day] = dateString.split('-');
-    return `${day}/${month}/${year}`;
-}
+function updateDateDisplay() { updateRangeInput(); }
+function removeDate() { clearRangeState(); applyFilters(); }
 
 // Tornar funções globais
-window.editNotaFiscal = editNotaFiscal;
-window.confirmDelete = confirmDelete;
-window.removeDate = removeDate;
+window.editNotaFiscal  = editNotaFiscal;
+window.confirmDelete   = confirmDelete;
+window.removeDate      = removeDate;
+window.clearRangeState = clearRangeState;
