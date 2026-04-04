@@ -511,7 +511,7 @@ async function editNotaFiscal(id) {
 
     // Campos bloqueados para fiscal (somente leitura)
     const fiscalReadonly = !isAdmin;
-    const lockFields = ['nfData', 'nfFornecedor', 'nfNumero', 'nfValor', 'nfHoraChegada', 'nfObservacao'];
+    const lockFields = ['nfData', 'nfFornecedor', 'nfNumero', 'nfValor', 'nfHoraChegada'];
     lockFields.forEach(fid => {
         const el = document.getElementById(fid);
         if (fiscalReadonly) {
