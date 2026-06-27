@@ -461,6 +461,37 @@ body {
     margin-top: var(--spacing-2);
 }
 
+/* Botão toggle de filtros — só aparece no mobile */
+.filters-toggle-mobile {
+    display: none;
+    align-items: center;
+    gap: var(--spacing-2);
+    background: none;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: var(--spacing-2);
+}
+
+.filters-toggle-mobile:hover {
+    background: var(--gray-100);
+}
+
+.toggle-chevron {
+    font-size: var(--text-xs);
+    margin-left: auto;
+    transition: transform 0.2s;
+}
+
+.filters-toggle-mobile.open .toggle-chevron {
+    transform: rotate(180deg);
+}
+
 .filters-header {
     display: flex;
     align-items: center;
@@ -497,23 +528,30 @@ body {
 }
 
 .filters-content {
-    /* Filtros sempre visíveis — sem colapso */
+    /* Filtros sempre visíveis no desktop */
+}
+
+.filters-grid {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+}
+
+.filters-grid .filter-group {
+    flex: 1;
+    min-width: 140px;
 }
 
 .filter-group-action {
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
 }
 
 .filter-group-action label {
-    visibility: hidden;
-}
-
-.filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: var(--spacing-3);
+    display: none; /* não precisa de label fantasma com flex-end */
 }
 
 /* ========================================
@@ -1314,11 +1352,11 @@ textarea {
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
     width: 100%;
-    max-width: 600px;
-    /* Desktop: o modal se ajusta ao conteúdo, sem scroll */
+    max-width: 580px;
     display: flex;
     flex-direction: column;
-    max-height: 92vh;
+    max-height: 88vh;
+    overflow: hidden;
     animation: modalSlideIn 0.3s ease;
 }
 
@@ -1341,8 +1379,9 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--spacing-5) var(--spacing-6);
+    padding: var(--spacing-4) var(--spacing-6);
     border-bottom: 1px solid var(--gray-200);
+    flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -1404,9 +1443,11 @@ textarea {
 }
 
 .nf-form {
-    padding: var(--spacing-4) var(--spacing-6);
+    padding: var(--spacing-4) var(--spacing-6) var(--spacing-2);
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
+    min-height: 0; /* necessário para flex + overflow funcionar */
 }
 
 .form-section {
@@ -1441,8 +1482,9 @@ textarea {
     display: flex;
     gap: var(--spacing-3);
     justify-content: flex-end;
-    padding: var(--spacing-5) var(--spacing-6);
+    padding: var(--spacing-4) var(--spacing-6);
     border-top: 1px solid var(--gray-200);
+    flex-shrink: 0;
 }
 
 .error-message {
@@ -1494,69 +1536,97 @@ textarea {
     .main-content {
         margin-left: 0;
         width: 100%;
+        /* Impede qualquer overflow horizontal na página inteira */
+        overflow-x: hidden;
     }
 
     /* Header Mobile */
     .page-header {
         padding: var(--spacing-3) var(--spacing-4);
+        /* Impede overflow horizontal no header */
+        overflow-x: hidden;
     }
 
     .page-header-top {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
         margin-bottom: var(--spacing-3);
-        gap: var(--spacing-3);
+        gap: var(--spacing-2);
     }
 
     .page-title {
         font-size: var(--text-xl);
-        white-space: normal;
     }
 
     .page-subtitle {
-        white-space: normal;
-    }
-
-    .page-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
-
-    .page-actions .btn {
-        flex: 1;
-        max-width: 50%;
-    }
-
-    .btn-text {
         display: none;
     }
 
-    /* Filtros Mobile */
+    /* Ocultar botões de exportar e nova NF (usamos o FAB) */
+    #exportReportBtn,
+    #newNFBtn {
+        display: none !important;
+    }
+
+    /* Impede que .page-actions ocupe espaço vazio */
+    .page-actions:empty,
+    .page-actions:has(> .hidden),
+    .page-actions {
+        display: none;
+    }
+
+    /* ---- Filtros Mobile: escondidos por padrão, toggleados ---- */
+    .filters-section {
+        margin-top: var(--spacing-2);
+    }
+
+    .filters-toggle-mobile {
+        display: flex !important;
+    }
+
+    .filters-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .filters-content.open {
+        max-height: 600px;
+    }
+
     .filters-grid {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        gap: var(--spacing-3);
+    }
+
+    .filters-grid .filter-group {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .filter-group-action {
+        width: 100%;
+    }
+
+    .filter-group-action .btn {
+        width: 100%;
     }
 
     /* Conteúdo Mobile */
     .page-content {
         padding: var(--spacing-3) var(--spacing-4);
+        overflow-x: hidden;
     }
 
-    /* FAB Mobile — visível e centralizado */
+    /* FAB Mobile */
     .fab-mobile {
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
-    .fab-mobile i {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-    }
-
-    /* Modal Mobile — sheet */
+    /* ---- Modal Mobile: bottom sheet ---- */
     .modal {
         padding: 0;
         align-items: flex-end;
@@ -1565,54 +1635,72 @@ textarea {
     .modal-content {
         margin: 0;
         border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-        max-height: 95vh;
+        max-height: 92vh;
         max-width: 100%;
         width: 100%;
+        /* Impede vazamento horizontal */
+        overflow: hidden;
     }
 
-    /* Formulário Mobile — campos 100% largura, sem overflow horizontal */
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-3);
-    }
-
+    /* ---- Formulário Mobile: sem overflow horizontal ---- */
     .nf-form {
         padding: var(--spacing-3) var(--spacing-4);
         width: 100%;
         overflow-x: hidden;
+        overflow-y: auto;
+        box-sizing: border-box;
+    }
+
+    .form-section {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-3);
+        width: 100%;
+        overflow: hidden;
     }
 
     .form-group {
         width: 100%;
         min-width: 0;
+        overflow: hidden;
     }
 
+    /* Todos os inputs nativos ficam presos à largura do pai */
+    input,
     input[type="text"],
     input[type="email"],
     input[type="password"],
     input[type="date"],
     input[type="time"],
+    input[type="number"],
     select,
     textarea {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        box-sizing: border-box;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    /* Inputs de data e hora no iOS têm largura intrínseca — forçar */
+    input[type="date"],
+    input[type="time"] {
+        display: block;
     }
 
     .form-actions {
         flex-direction: column-reverse;
-        padding: var(--spacing-4);
+        padding: var(--spacing-3) var(--spacing-4);
     }
 
     .form-actions .btn {
         width: 100%;
-    }
-
-    /* Ocultar botões de exportar e nova NF no header mobile (usamos o FAB) */
-    #exportReportBtn,
-    #newNFBtn {
-        display: none !important;
     }
 
     /* Login Mobile */

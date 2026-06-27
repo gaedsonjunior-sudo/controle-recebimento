@@ -119,7 +119,7 @@ function setupEventListeners() {
         fabMobile.addEventListener('click', openNewNFModal);
     }
 
-    // Toggle Filtros (botão removido, mas mantém segurança caso reativado)
+    // Toggle Filtros (visível e funcional no mobile)
     if (toggleFiltersBtn) toggleFiltersBtn.addEventListener('click', toggleFilters);
 
     // Exportar Relatório — único listener
@@ -181,13 +181,17 @@ function toggleSidebar() {
     sidebar.classList.toggle('active');
 }
 
-// Toggle Filtros
+// Toggle Filtros — só opera no mobile; no desktop os filtros ficam sempre visíveis
 function toggleFilters() {
-    const filtersContent = document.getElementById('filtersContent');
-    const toggleBtn = document.getElementById('toggleFiltersBtn');
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return;
 
-    filtersContent.classList.toggle('active');
-    toggleBtn.classList.toggle('active');
+    const content = document.getElementById('filtersContent');
+    const btn     = document.getElementById('toggleFiltersBtn');
+    if (!content) return;
+
+    const isOpen = content.classList.toggle('open');
+    if (btn) btn.classList.toggle('open', isOpen);
 }
 
 // Setup listeners de ordenação
@@ -679,7 +683,19 @@ function clearFilters() {
     document.getElementById('filterData').value = '';
     document.getElementById('filterStatus').value = '';
 
+    // Zerar período (range calendar)
     selectedDates = [];
+    rangeStart = null;
+    rangeEnd   = null;
+
+    // Limpar display do calendário
+    const disp = document.getElementById('selectedDatesDisplay');
+    if (disp) disp.innerHTML = '';
+
+    // Fechar calendário se estiver aberto
+    const cal = document.getElementById('rangeCalendar');
+    if (cal) cal.remove();
+
     updateDateDisplay();
 
     const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);

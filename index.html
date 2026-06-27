@@ -99,7 +99,14 @@
 
                 <!-- Filtros -->
                 <div class="filters-section" id="filtersWrapper">
-                    <div class="filters-content active" id="filtersContent">
+                    <!-- Botão toggle — visível só no mobile via CSS -->
+                    <button type="button" id="toggleFiltersBtn" class="filters-toggle-mobile">
+                        <i class="fas fa-filter"></i>
+                        <span>Filtros</span>
+                        <i class="fas fa-chevron-down toggle-chevron"></i>
+                    </button>
+
+                    <div class="filters-content" id="filtersContent">
                         <div class="filters-grid">
                             <div class="filter-group">
                                 <label for="filterFornecedor">Fornecedor</label>
