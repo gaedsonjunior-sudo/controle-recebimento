@@ -497,13 +497,17 @@ body {
 }
 
 .filters-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
+    /* Filtros sempre visíveis — sem colapso */
 }
 
-.filters-content.active {
-    max-height: 300px;
+.filter-group-action {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.filter-group-action label {
+    visibility: hidden;
 }
 
 .filters-grid {
@@ -1311,8 +1315,10 @@ textarea {
     box-shadow: var(--shadow-xl);
     width: 100%;
     max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
+    /* Desktop: o modal se ajusta ao conteúdo, sem scroll */
+    display: flex;
+    flex-direction: column;
+    max-height: 92vh;
     animation: modalSlideIn 0.3s ease;
 }
 
@@ -1398,11 +1404,13 @@ textarea {
 }
 
 .nf-form {
-    padding: var(--spacing-6);
+    padding: var(--spacing-4) var(--spacing-6);
+    overflow-y: auto;
+    flex: 1;
 }
 
 .form-section {
-    margin-bottom: var(--spacing-6);
+    margin-bottom: var(--spacing-4);
 }
 
 .form-section:last-of-type {
@@ -1410,19 +1418,19 @@ textarea {
 }
 
 .form-section-title {
-    font-size: var(--text-base);
+    font-size: var(--text-sm);
     font-weight: var(--font-semibold);
     color: var(--gray-900);
-    margin-bottom: var(--spacing-4);
-    padding-bottom: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+    padding-bottom: var(--spacing-2);
     border-bottom: 1px solid var(--gray-200);
 }
 
 .form-row {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-4);
-    margin-bottom: var(--spacing-4);
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
 }
 
 .form-row:last-child {
@@ -1562,14 +1570,30 @@ textarea {
         width: 100%;
     }
 
-    /* Formulário Mobile — campos 100% largura */
+    /* Formulário Mobile — campos 100% largura, sem overflow horizontal */
     .form-row {
         grid-template-columns: 1fr;
         gap: var(--spacing-3);
     }
 
+    .nf-form {
+        padding: var(--spacing-3) var(--spacing-4);
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .form-group {
+        width: 100%;
+        min-width: 0;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
     input[type="date"],
-    input[type="time"] {
+    input[type="time"],
+    select,
+    textarea {
         width: 100%;
         max-width: 100%;
         min-width: 0;
@@ -1583,6 +1607,12 @@ textarea {
 
     .form-actions .btn {
         width: 100%;
+    }
+
+    /* Ocultar botões de exportar e nova NF no header mobile (usamos o FAB) */
+    #exportReportBtn,
+    #newNFBtn {
+        display: none !important;
     }
 
     /* Login Mobile */

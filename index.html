@@ -99,19 +99,7 @@
 
                 <!-- Filtros -->
                 <div class="filters-section" id="filtersWrapper">
-                    <div class="filters-header">
-                        <button id="toggleFiltersBtn" class="btn-filter-toggle">
-                            <i class="fas fa-filter"></i>
-                            <span>Filtros</span>
-                            <i class="fas fa-chevron-down toggle-icon"></i>
-                        </button>
-                        <button id="clearFiltersBtn" class="btn btn-ghost btn-sm">
-                            <i class="fas fa-times"></i>
-                            Limpar
-                        </button>
-                    </div>
-
-                    <div class="filters-content" id="filtersContent">
+                    <div class="filters-content active" id="filtersContent">
                         <div class="filters-grid">
                             <div class="filter-group">
                                 <label for="filterFornecedor">Fornecedor</label>
@@ -139,6 +127,13 @@
                                     <option value="Acatada">Acatada</option>
                                     <option value="Devolvida">Devolvida</option>
                                 </select>
+                            </div>
+                            <div class="filter-group filter-group-action">
+                                <label>&nbsp;</label>
+                                <button id="clearFiltersBtn" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-times"></i>
+                                    Limpar filtros
+                                </button>
                             </div>
                         </div>
                     </div>

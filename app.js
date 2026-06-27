@@ -119,8 +119,8 @@ function setupEventListeners() {
         fabMobile.addEventListener('click', openNewNFModal);
     }
 
-    // Toggle Filtros
-    toggleFiltersBtn.addEventListener('click', toggleFilters);
+    // Toggle Filtros (botão removido, mas mantém segurança caso reativado)
+    if (toggleFiltersBtn) toggleFiltersBtn.addEventListener('click', toggleFilters);
 
     // Exportar Relatório — único listener
     exportReportBtn.addEventListener('click', exportReport);
@@ -289,14 +289,33 @@ function showMainScreen() {
 // Carregar notas fiscais
 async function loadNotasFiscais() {
     try {
-        const { data, error } = await supabaseClient
-            .from('notas_fiscais')
-            .select('*')
-            .order('data', { ascending: false });
+        // O Supabase retorna no máximo 1000 registros por requisição.
+        // Fazemos buscas em páginas de 1000 até esgotar todos os registros.
+        const PAGE_SIZE = 1000;
+        let allData = [];
+        let from = 0;
+        let keepFetching = true;
 
-        if (error) throw error;
+        while (keepFetching) {
+            const { data, error } = await supabaseClient
+                .from('notas_fiscais')
+                .select('*')
+                .order('data', { ascending: false })
+                .range(from, from + PAGE_SIZE - 1);
 
-        notasFiscais = data || [];
+            if (error) throw error;
+
+            const page = data || [];
+            allData = allData.concat(page);
+
+            if (page.length < PAGE_SIZE) {
+                keepFetching = false; // última página
+            } else {
+                from += PAGE_SIZE;
+            }
+        }
+
+        notasFiscais = allData;
 
         const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
         renderNotasFiscais(sorted);
