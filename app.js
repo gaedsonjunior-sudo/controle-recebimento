@@ -2,8 +2,13 @@
 let currentUser = null;
 let isAdmin = false;
 let notasFiscais = [];
+let filteredNotas = []; // Notas após aplicação de filtros
 let editingNFId = null;
 let deleteNFId = null;
+
+// Controle de paginação
+let currentPage = 1;
+const recordsPerPage = 25;
 
 // Controle de ordenação
 let currentSortColumn = 'data';
@@ -155,12 +160,16 @@ function setupEventListeners() {
     nfForm.addEventListener('submit', handleNFSubmit);
 
     // Filtros
-    document.getElementById('filterFornecedor').addEventListener('input', applyFilters);
-    document.getElementById('filterNF').addEventListener('input', applyFilters);
+    document.getElementById('filterFornecedor').addEventListener('input', () => { currentPage = 1; applyFilters(); });
+    document.getElementById('filterNF').addEventListener('input', () => { currentPage = 1; applyFilters(); });
     document.getElementById('openDatePicker').addEventListener('click', toggleRangeCal);
     document.getElementById('filterData').addEventListener('click', toggleRangeCal);
-    document.getElementById('filterStatus').addEventListener('change', applyFilters);
+    document.getElementById('filterStatus').addEventListener('change', () => { currentPage = 1; applyFilters(); });
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+
+    // Paginação
+    document.getElementById('prevPage').addEventListener('click', () => changePage(currentPage - 1));
+    document.getElementById('nextPage').addEventListener('click', () => changePage(currentPage + 1));
 
     // Formatação de valores
     document.getElementById('nfValor').addEventListener('input', formatCurrency);
@@ -185,9 +194,11 @@ function toggleSidebar() {
 function toggleFilters() {
     const filtersContent = document.getElementById('filtersContent');
     const toggleBtn = document.getElementById('toggleFiltersBtn');
+    const filtersHeader = document.querySelector('.filters-header');
 
     filtersContent.classList.toggle('active');
     toggleBtn.classList.toggle('active');
+    if (filtersHeader) filtersHeader.classList.toggle('active');
 }
 
 // Setup listeners de ordenação
@@ -339,13 +350,25 @@ function renderNotasFiscais(notas) {
         totalNotasMobile.textContent = `${total} ${total === 1 ? 'nota' : 'notas'}`;
     }
 
+    // Paginação Desktop
+    const totalPages = Math.ceil(total / recordsPerPage);
+    if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+    
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const endIndex = Math.min(startIndex + recordsPerPage, total);
+    const paginatedNotas = notas.slice(startIndex, endIndex);
+
+    updatePaginationUI(total, totalPages);
+
     // Desktop: Tabela
     if (total === 0) {
         notasTableBody.innerHTML = '';
         emptyState.classList.add('active');
+        document.getElementById('paginationContainer').style.display = 'none';
     } else {
         emptyState.classList.remove('active');
-        notasTableBody.innerHTML = notas.map(nota => {
+        document.getElementById('paginationContainer').style.display = 'flex';
+        notasTableBody.innerHTML = paginatedNotas.map(nota => {
             const statusClass = nota.status.toLowerCase().replace(/\s/g, '-').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
             return `
@@ -376,7 +399,7 @@ function renderNotasFiscais(notas) {
         }).join('');
     }
 
-    // Mobile: Cards
+    // Mobile: Cards (exibe todos os filtrados, sem paginação conforme padrão mobile de scroll)
     const notasCards = document.getElementById('notasCards');
     const emptyStateMobile = document.getElementById('emptyStateMobile');
 
@@ -424,18 +447,18 @@ function renderNotasFiscais(notas) {
                                 </div>
                             ` : ''}
                             ${nota.observacao ? `
-                                <div class="nota-card-field nota-card-observacao">
+                                <div class="nota-card-field full-width">
                                     <div class="nota-card-label">Observação</div>
                                     <div class="nota-card-value">${nota.observacao}</div>
                                 </div>
                             ` : ''}
                         </div>
                         <div class="nota-card-actions">
-                            <button class="btn-action edit" onclick="editNotaFiscal('${nota.id}')">
+                            <button class="btn btn-secondary btn-sm" onclick="editNotaFiscal('${nota.id}')">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
                             ${isAdmin ? `
-                                <button class="btn-action delete" onclick="confirmDelete('${nota.id}')">
+                                <button class="btn btn-danger btn-sm" onclick="confirmDelete('${nota.id}')">
                                     <i class="fas fa-trash"></i> Excluir
                                 </button>
                             ` : ''}
@@ -445,6 +468,53 @@ function renderNotasFiscais(notas) {
             }).join('');
         }
     }
+}
+
+function updatePaginationUI(total, totalPages) {
+    const paginationRange = document.getElementById('paginationRange');
+    const paginationTotal = document.getElementById('paginationTotal');
+    const pageNumbers = document.getElementById('pageNumbers');
+    const prevPage = document.getElementById('prevPage');
+    const nextPage = document.getElementById('nextPage');
+
+    if (total === 0) {
+        paginationRange.textContent = '0-0';
+        paginationTotal.textContent = '0';
+        return;
+    }
+
+    const start = (currentPage - 1) * recordsPerPage + 1;
+    const end = Math.min(currentPage * recordsPerPage, total);
+    paginationRange.textContent = `${start}-${end}`;
+    paginationTotal.textContent = total;
+
+    prevPage.disabled = currentPage === 1;
+    nextPage.disabled = currentPage === totalPages;
+
+    // Gerar números de página
+    let pages = [];
+    if (totalPages <= 5) {
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+        if (currentPage <= 3) {
+            pages = [1, 2, 3, '...', totalPages];
+        } else if (currentPage >= totalPages - 2) {
+            pages = [1, '...', totalPages - 2, totalPages - 1, totalPages];
+        } else {
+            pages = [1, '...', currentPage, '...', totalPages];
+        }
+    }
+
+    pageNumbers.innerHTML = pages.map(p => {
+        if (p === '...') return `<span class="pagination-ellipsis">...</span>`;
+        return `<button class="page-num ${p === currentPage ? 'active' : ''}" onclick="changePage(${p})">${p}</button>`;
+    }).join('');
+}
+
+function changePage(page) {
+    currentPage = page;
+    const sorted = sortNotas([...filteredNotas], currentSortColumn, currentSortDirection);
+    renderNotasFiscais(sorted);
 }
 
 // Ordenação
@@ -661,7 +731,7 @@ function applyFilters() {
     const status = document.getElementById('filterStatus').value;
     const datas = selectedDates;
 
-    const filtered = notasFiscais.filter(nota => {
+    filteredNotas = notasFiscais.filter(nota => {
         const matchFornecedor = !fornecedor || nota.fornecedor.toLowerCase().includes(fornecedor);
         const matchNF = !nf || nota.numero_nf.toString().includes(nf.replace(/\./g, ''));
         const matchData = datas.length === 0 || datas.includes(nota.data);
@@ -670,7 +740,7 @@ function applyFilters() {
         return matchFornecedor && matchNF && matchData && matchStatus;
     });
 
-    const sorted = sortNotas([...filtered], currentSortColumn, currentSortDirection);
+    const sorted = sortNotas([...filteredNotas], currentSortColumn, currentSortDirection);
     renderNotasFiscais(sorted);
 }
 

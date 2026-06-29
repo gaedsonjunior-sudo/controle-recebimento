@@ -48,19 +48,31 @@
    ======================================== */
 
 .filters-section {
-    background: linear-gradient(to right, rgba(240, 249, 255, 0.5), rgba(224, 242, 254, 0.5));
-    border-bottom: 1px solid rgba(14, 165, 233, 0.1);
-    padding: var(--spacing-5) var(--spacing-6);
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: var(--spacing-3) var(--spacing-6);
+}
+
+.filters-header {
+    margin-bottom: var(--spacing-2);
+}
+
+.filters-grid {
+    gap: var(--spacing-3);
 }
 
 .filter-group label {
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--gray-700);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: var(--spacing-2);
+    font-size: 10px;
+    margin-bottom: var(--spacing-1);
 }
+
+.filter-group input,
+.filter-group select {
+    padding: var(--spacing-1) var(--spacing-2);
+    height: 32px;
+}
+
+/* label style already defined above */
 
 .filter-group input,
 .filter-group select {
@@ -311,6 +323,7 @@
     backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow), 0 20px 60px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
 }
 
 .modal-header {

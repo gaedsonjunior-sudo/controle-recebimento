@@ -182,6 +182,21 @@
                                 <!-- Dados serão inseridos via JavaScript -->
                             </tbody>
                         </table>
+                        <!-- Paginação Desktop -->
+                        <div id="paginationContainer" class="pagination-container desktop-only">
+                            <div class="pagination-info">
+                                Exibindo <span id="paginationRange">0-0</span> de <span id="paginationTotal">0</span>
+                            </div>
+                            <div class="pagination-controls">
+                                <button id="prevPage" class="btn btn-ghost btn-sm" disabled>
+                                    <i class="fas fa-chevron-left"></i> Anterior
+                                </button>
+                                <div id="pageNumbers" class="page-numbers"></div>
+                                <button id="nextPage" class="btn btn-ghost btn-sm" disabled>
+                                    Próximo <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
                         <div id="emptyState" class="empty-state">
                             <div class="empty-icon">
                                 <i class="fas fa-file-invoice"></i>
