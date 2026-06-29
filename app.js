@@ -120,7 +120,7 @@ function setupEventListeners() {
     }
 
     // Toggle Filtros
-    if (toggleFiltersBtn) toggleFiltersBtn.addEventListener('click', toggleFilters);
+    toggleFiltersBtn.addEventListener('click', toggleFilters);
 
     // Exportar Relatório — único listener
     exportReportBtn.addEventListener('click', exportReport);
@@ -183,12 +183,11 @@ function toggleSidebar() {
 
 // Toggle Filtros
 function toggleFilters() {
-    if (window.innerWidth > 768) return; // no desktop, filtros sempre visíveis
-    const content = document.getElementById('filtersContent');
-    const btn     = document.getElementById('toggleFiltersBtn');
-    if (!content) return;
-    const isOpen = content.classList.toggle('open');
-    if (btn) btn.classList.toggle('open', isOpen);
+    const filtersContent = document.getElementById('filtersContent');
+    const toggleBtn = document.getElementById('toggleFiltersBtn');
+
+    filtersContent.classList.toggle('active');
+    toggleBtn.classList.toggle('active');
 }
 
 // Setup listeners de ordenação
@@ -290,31 +289,14 @@ function showMainScreen() {
 // Carregar notas fiscais
 async function loadNotasFiscais() {
     try {
-        const PAGE_SIZE = 1000;
-        let allData = [];
-        let from = 0;
-        let keepFetching = true;
+        const { data, error } = await supabaseClient
+            .from('notas_fiscais')
+            .select('*')
+            .order('data', { ascending: false });
 
-        while (keepFetching) {
-            const { data, error } = await supabaseClient
-                .from('notas_fiscais')
-                .select('*')
-                .order('data', { ascending: false })
-                .range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
 
-            if (error) throw error;
-
-            const page = data || [];
-            allData = allData.concat(page);
-
-            if (page.length < PAGE_SIZE) {
-                keepFetching = false;
-            } else {
-                from += PAGE_SIZE;
-            }
-        }
-
-        notasFiscais = allData;
+        notasFiscais = data || [];
 
         const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
         renderNotasFiscais(sorted);
@@ -679,15 +661,6 @@ function clearFilters() {
     document.getElementById('filterStatus').value = '';
 
     selectedDates = [];
-    rangeStart = null;
-    rangeEnd   = null;
-
-    const disp = document.getElementById('selectedDatesDisplay');
-    if (disp) disp.innerHTML = '';
-
-    const cal = document.getElementById('rangeCalendar');
-    if (cal) cal.remove();
-
     updateDateDisplay();
 
     const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
