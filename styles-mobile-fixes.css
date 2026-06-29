@@ -147,6 +147,20 @@
         min-width: 0 !important;
         box-sizing: border-box !important;
         display: block;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    }
+
+    /* Correção específica para inputs de data e hora no mobile que podem forçar largura */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+        margin: 0;
+    }
+
+    .form-group {
+        width: 100%;
+        overflow: hidden;
     }
 
     .form-actions {

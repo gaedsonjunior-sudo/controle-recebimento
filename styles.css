@@ -1566,3 +1566,79 @@ textarea {
     white-space: nowrap;
     border-width: 0;
 }
+
+/* ========================================
+   PAGINAÇÃO
+   ======================================== */
+.pagination-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-4) var(--spacing-6);
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+}
+
+.pagination-info {
+    font-size: var(--text-sm);
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+}
+
+.page-numbers {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.page-num {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 var(--spacing-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+    background: white;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--gray-700);
+}
+
+.page-num:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-300);
+}
+
+.page-num.active {
+    background: var(--primary-600);
+    color: white;
+    border-color: var(--primary-600);
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2);
+}
+
+.pagination-ellipsis {
+    color: var(--gray-400);
+    font-size: var(--text-sm);
+    display: flex;
+    align-items: center;
+}
+
+#prevPage, #nextPage {
+    height: 36px;
+    padding: 0 var(--spacing-4);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-weight: 600;
+}

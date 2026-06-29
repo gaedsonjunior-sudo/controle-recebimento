@@ -164,6 +164,12 @@ function setupEventListeners() {
     document.getElementById('filterNF').addEventListener('input', () => { currentPage = 1; applyFilters(); });
     document.getElementById('openDatePicker').addEventListener('click', toggleRangeCal);
     document.getElementById('filterData').addEventListener('click', toggleRangeCal);
+    // Observar mudanças no selectedDates (via calendário)
+    const originalUpdateDateDisplay = window.updateDateDisplay;
+    window.updateDateDisplay = function() {
+        if (typeof originalUpdateDateDisplay === 'function') originalUpdateDateDisplay();
+        applyFilters();
+    };
     document.getElementById('filterStatus').addEventListener('change', () => { currentPage = 1; applyFilters(); });
     document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
 
@@ -342,6 +348,9 @@ async function loadNotasFiscais() {
 
 // Renderizar notas fiscais (desktop e mobile)
 function renderNotasFiscais(notas) {
+    // Atualizar filteredNotas globalmente para que a paginação saiba o que exibir
+    filteredNotas = notas;
+    
     const total = notas.length;
     totalNotas.textContent = `${total} ${total === 1 ? 'nota' : 'notas'}`;
 
@@ -351,8 +360,9 @@ function renderNotasFiscais(notas) {
     }
 
     // Paginação Desktop
-    const totalPages = Math.ceil(total / recordsPerPage);
-    if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+    const totalPages = Math.ceil(total / recordsPerPage) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
     
     const startIndex = (currentPage - 1) * recordsPerPage;
     const endIndex = Math.min(startIndex + recordsPerPage, total);
@@ -512,9 +522,16 @@ function updatePaginationUI(total, totalPages) {
 }
 
 function changePage(page) {
-    currentPage = page;
-    const sorted = sortNotas([...filteredNotas], currentSortColumn, currentSortDirection);
+    currentPage = parseInt(page);
+    // Usar filteredNotas se houver filtros aplicados, senão usar notasFiscais
+    const source = (filteredNotas && filteredNotas.length > 0) ? filteredNotas : (document.getElementById('filterFornecedor').value || document.getElementById('filterNF').value || document.getElementById('filterStatus').value) ? [] : notasFiscais;
+    
+    const sorted = sortNotas([...source], currentSortColumn, currentSortDirection);
     renderNotasFiscais(sorted);
+    
+    // Scroll para o topo da tabela
+    const tableSection = document.querySelector('.table-section');
+    if (tableSection) tableSection.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Ordenação
@@ -726,6 +743,7 @@ async function deleteNotaFiscal() {
 
 // Filtros
 function applyFilters() {
+    currentPage = 1; // Resetar para a primeira página ao filtrar
     const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
     const nf = document.getElementById('filterNF').value;
     const status = document.getElementById('filterStatus').value;
