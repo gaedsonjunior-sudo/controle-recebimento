@@ -119,7 +119,7 @@ function setupEventListeners() {
         fabMobile.addEventListener('click', openNewNFModal);
     }
 
-    // Toggle Filtros (visível e funcional no mobile)
+    // Toggle Filtros
     if (toggleFiltersBtn) toggleFiltersBtn.addEventListener('click', toggleFilters);
 
     // Exportar Relatório — único listener
@@ -181,15 +181,12 @@ function toggleSidebar() {
     sidebar.classList.toggle('active');
 }
 
-// Toggle Filtros — só opera no mobile; no desktop os filtros ficam sempre visíveis
+// Toggle Filtros
 function toggleFilters() {
-    const isMobile = window.innerWidth <= 768;
-    if (!isMobile) return;
-
+    if (window.innerWidth > 768) return; // no desktop, filtros sempre visíveis
     const content = document.getElementById('filtersContent');
     const btn     = document.getElementById('toggleFiltersBtn');
     if (!content) return;
-
     const isOpen = content.classList.toggle('open');
     if (btn) btn.classList.toggle('open', isOpen);
 }
@@ -293,8 +290,6 @@ function showMainScreen() {
 // Carregar notas fiscais
 async function loadNotasFiscais() {
     try {
-        // O Supabase retorna no máximo 1000 registros por requisição.
-        // Fazemos buscas em páginas de 1000 até esgotar todos os registros.
         const PAGE_SIZE = 1000;
         let allData = [];
         let from = 0;
@@ -313,7 +308,7 @@ async function loadNotasFiscais() {
             allData = allData.concat(page);
 
             if (page.length < PAGE_SIZE) {
-                keepFetching = false; // última página
+                keepFetching = false;
             } else {
                 from += PAGE_SIZE;
             }
@@ -683,16 +678,13 @@ function clearFilters() {
     document.getElementById('filterData').value = '';
     document.getElementById('filterStatus').value = '';
 
-    // Zerar período (range calendar)
     selectedDates = [];
     rangeStart = null;
     rangeEnd   = null;
 
-    // Limpar display do calendário
     const disp = document.getElementById('selectedDatesDisplay');
     if (disp) disp.innerHTML = '';
 
-    // Fechar calendário se estiver aberto
     const cal = document.getElementById('rangeCalendar');
     if (cal) cal.remove();
 
