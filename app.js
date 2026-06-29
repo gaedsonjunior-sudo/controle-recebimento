@@ -286,17 +286,37 @@ function showMainScreen() {
     loadNotasFiscais();
 }
 
-// Carregar notas fiscais
+// Carregar notas fiscais com paginação acumulativa para suportar mais de 1000 registros
 async function loadNotasFiscais() {
     try {
-        const { data, error } = await supabaseClient
-            .from('notas_fiscais')
-            .select('*')
-            .order('data', { ascending: false });
+        let allData = [];
+        let pageSize = 1000;
+        let offset = 0;
+        let hasMore = true;
 
-        if (error) throw error;
+        // Carregar todas as páginas de dados
+        while (hasMore) {
+            const { data, error } = await supabaseClient
+                .from('notas_fiscais')
+                .select('*')
+                .order('data', { ascending: false })
+                .range(offset, offset + pageSize - 1);
 
-        notasFiscais = data || [];
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                hasMore = false;
+            } else {
+                allData = allData.concat(data);
+                if (data.length < pageSize) {
+                    hasMore = false;
+                } else {
+                    offset += pageSize;
+                }
+            }
+        }
+
+        notasFiscais = allData;
 
         const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
         renderNotasFiscais(sorted);

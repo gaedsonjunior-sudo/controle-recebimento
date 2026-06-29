@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Notas Fiscais - Recebimento</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-modern.css">
+    <link rel="stylesheet" href="styles-mobile-fixes.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -39,53 +41,42 @@
 
     <!-- Tela Principal -->
     <div id="mainScreen" class="screen">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Header com Logout -->
+        <header class="top-bar">
+            <div class="top-bar-content">
+                <div class="top-bar-logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    <span class="sidebar-title">NF Manager</span>
+                    <span class="top-bar-title">NF Manager</span>
                 </div>
-                <button class="sidebar-toggle" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active">
-                    <i class="fas fa-file-invoice"></i>
-                    <span>Notas Fiscais</span>
-                </a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
+                <div class="top-bar-user">
+                    <div class="user-profile-compact">
+                        <div class="user-avatar-compact">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details-compact">
+                            <span class="user-name" id="currentUserName"></span>
+                            <span class="user-role" id="currentUserRole"></span>
+                        </div>
                     </div>
-                    <div class="user-details">
-                        <span class="user-name" id="currentUserName"></span>
-                        <span class="user-role" id="currentUserRole"></span>
-                    </div>
+                    <button id="logoutBtn" class="btn-logout" title="Sair">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
                 </div>
-                <button id="logoutBtn" class="btn-logout" title="Sair">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
             </div>
-        </aside>
+        </header>
 
         <!-- Conteúdo Principal -->
-        <div class="main-content">
+        <div class="main-content main-content-full">
             <header class="page-header">
                 <div class="page-header-top">
                     <div class="page-title-section">
                         <h1 class="page-title">Notas Fiscais</h1>
                         <p class="page-subtitle">Gerenciamento de recebimento</p>
                     </div>
-                    <div class="page-actions">
+                    <div class="page-actions desktop-only">
                         <button id="exportReportBtn" class="btn btn-secondary">
                             <i class="fas fa-download"></i>
                             <span class="btn-text">Exportar</span>
