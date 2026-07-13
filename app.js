@@ -161,6 +161,7 @@ function setupEventListeners() {
 
     // Filtros
     document.getElementById('filterFornecedor').addEventListener('input', () => { currentPage = 1; applyFilters(); });
+    document.getElementById('filterNF').addEventListener('input', () => { currentPage = 1; applyFilters(); });
     document.getElementById('filterData').addEventListener('click', toggleRangeCal);
     // Observar mudanças no selectedDates (via calendário)
     const originalUpdateDateDisplay = window.updateDateDisplay;
@@ -749,18 +750,18 @@ async function deleteNotaFiscal() {
 // Filtros
 function applyFilters() {
     currentPage = 1; // Resetar para a primeira página ao filtrar
-    const searchTerm = document.getElementById('filterFornecedor').value.toLowerCase();
+    const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
+    const nf = document.getElementById('filterNF').value;
     const status = document.getElementById('filterStatus').value;
     const datas = selectedDates;
 
     filteredNotas = notasFiscais.filter(nota => {
-        const matchSearch = !searchTerm || 
-            nota.fornecedor.toLowerCase().includes(searchTerm) || 
-            nota.numero_nf.toString().includes(searchTerm.replace(/\./g, ''));
+        const matchFornecedor = !fornecedor || nota.fornecedor.toLowerCase().includes(fornecedor);
+        const matchNF = !nf || nota.numero_nf.toString().includes(nf.replace(/\./g, ''));
         const matchData = datas.length === 0 || datas.includes(nota.data);
         const matchStatus = !status || nota.status === status;
 
-        return matchSearch && matchData && matchStatus;
+        return matchFornecedor && matchNF && matchData && matchStatus;
     });
 
     const sorted = sortNotas([...filteredNotas], currentSortColumn, currentSortDirection);
@@ -769,6 +770,7 @@ function applyFilters() {
 
 function clearFilters() {
     document.getElementById('filterFornecedor').value = '';
+    document.getElementById('filterNF').value = '';
     const filterData = document.getElementById('filterData');
     if (filterData) filterData.value = '';
     document.getElementById('filterStatus').value = '';

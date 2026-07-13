@@ -45,7 +45,7 @@
 }
 
 /* ========================================
-   NOVOS CARDS DE RESUMO
+   NOVOS CARDS DE RESUMO (INSPIRAÇÃO VISUAL)
    ======================================== */
 
 .summary-cards {
@@ -96,89 +96,35 @@
 }
 
 /* ========================================
-   FILTROS REMODELADOS - DESIGN MODERNO
+   FILTROS - ESTILO INSPIRADO NA IMAGEM
    ======================================== */
 
-.filters-section-modern {
+.filters-section {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 12px;
+    padding: 16px;
     margin-bottom: 24px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.filters-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-}
-
-.filter-item {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex: 1;
-    min-width: 200px;
-}
-
-.filter-icon {
-    position: absolute;
-    left: 12px;
-    color: #94a3b8;
-    pointer-events: none;
-    font-size: 14px;
-}
-
-.filter-item input,
-.filter-item select {
-    width: 100%;
-    padding: 10px 12px 10px 36px;
+.filter-group input,
+.filter-group select {
     border: 1px solid #e2e8f0;
     border-radius: 8px;
+    padding: 10px 12px;
     font-size: 14px;
-    color: #1e293b;
-    background-color: #f8fafc;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    background: #f8fafc;
     height: 42px;
 }
 
-.filter-item input:focus,
-.filter-item select:focus {
+.filter-group input:focus,
+.filter-group select:focus {
     outline: none;
     border-color: var(--primary-400);
-    background-color: #ffffff;
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-}
-
-.btn-clear-filters {
-    padding: 0 24px;
-    background-color: #f1f5f9;
-    color: #475569;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-clear-filters:hover {
-    background-color: #e2e8f0;
-    color: #1e293b;
-}
-
-.selected-dates-modern {
-    margin-top: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+    background: white;
 }
 
 /* ========================================
@@ -500,7 +446,7 @@
 }
 
 /* ========================================
-   RESPONSIVIDADE MOBILE - CARDS E FILTROS
+   RESPONSIVIDADE MOBILE - CARDS
    ======================================== */
 
 @media (max-width: 768px) {
@@ -515,13 +461,5 @@
 
     .summary-card-value {
         font-size: 20px;
-    }
-
-    .filter-item {
-        min-width: 100%;
-    }
-
-    .btn-clear-filters {
-        width: 100%;
     }
 }

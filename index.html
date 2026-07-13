@@ -108,30 +108,51 @@
                     </div>
                 </div>
 
-                <!-- Filtros -->
-                <div class="filters-section-modern" id="filtersWrapper">
-                    <div class="filters-container">
-                        <div class="filter-item search-input">
-                            <i class="fas fa-search filter-icon"></i>
-                            <input type="text" id="filterFornecedor" placeholder="Buscar por Fornecedor ou NF...">
-                        </div>
-                        <div class="filter-item date-input">
-                            <i class="fas fa-calendar-alt filter-icon"></i>
-                            <input type="text" id="filterData" placeholder="dd / mm / aaaa" readonly>
-                        </div>
-                        <div class="filter-item select-input">
-                            <select id="filterStatus">
-                                <option value="">Todos os Status</option>
-                                <option value="Não Acatada">Não Acatada</option>
-                                <option value="Acatada">Acatada</option>
-                                <option value="Devolvida">Devolvida</option>
-                            </select>
-                        </div>
-                        <button id="clearFiltersBtn" class="btn-clear-filters">
-                            Limpar Filtros
+                <!-- Filtros (Restaurados conforme original) -->
+                <div class="filters-section" id="filtersWrapper">
+                    <div class="filters-header">
+                        <button id="toggleFiltersBtn" class="btn-filter-toggle">
+                            <i class="fas fa-filter"></i>
+                            <span>Filtros</span>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
+                        </button>
+                        <button id="clearFiltersBtn" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-times"></i>
+                            Limpar
                         </button>
                     </div>
-                    <div id="selectedDatesDisplay" class="selected-dates-modern"></div>
+
+                    <div class="filters-content" id="filtersContent">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="filterFornecedor">Fornecedor</label>
+                                <input type="text" id="filterFornecedor" placeholder="Buscar fornecedor...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="filterNF">Número da NF</label>
+                                <input type="text" id="filterNF" placeholder="Buscar nº...">
+                            </div>
+                            <div class="filter-group">
+                                <label for="filterData">Período</label>
+                                <div class="date-picker-container">
+                                    <input type="text" id="filterData" placeholder="Selecionar período" readonly style="cursor:pointer;">
+                                    <button type="button" id="openDatePicker" class="date-picker-btn" title="Abrir calendário">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </button>
+                                </div>
+                                <div id="selectedDatesDisplay" class="selected-dates"></div>
+                            </div>
+                            <div class="filter-group">
+                                <label for="filterStatus">Status</label>
+                                <select id="filterStatus">
+                                    <option value="">Todos</option>
+                                    <option value="Não Acatada">Não Acatada</option>
+                                    <option value="Acatada">Acatada</option>
+                                    <option value="Devolvida">Devolvida</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -270,21 +291,21 @@
                             <input type="text" id="nfNumero" required placeholder="000.000.000" inputmode="numeric">
                         </div>
                     </div>
-                </div>
 
-                <div class="form-section">
-                    <h3 class="form-section-title">Detalhes</h3>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="nfValor">Valor *</label>
-                            <input type="text" id="nfValor" required placeholder="R$ 0,00" inputmode="decimal">
+                            <label for="nfValor">Valor Total (R$) *</label>
+                            <input type="text" id="nfValor" required placeholder="0,00" inputmode="decimal">
                         </div>
                         <div class="form-group">
                             <label for="nfTemperatura">Temperatura (°C)</label>
-                            <input type="text" id="nfTemperatura" placeholder="Ex: 5°C">
+                            <input type="text" id="nfTemperatura" placeholder="Ex: 5.5">
                         </div>
                     </div>
+                </div>
 
+                <div class="form-section">
+                    <h3 class="form-section-title">Finalização</h3>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="nfHoraSaida">Hora de Saída</label>
@@ -299,26 +320,23 @@
                             </select>
                         </div>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="nfObservacao">Observação</label>
-                            <textarea id="nfObservacao" placeholder="Ex: Recebeu no dia seguinte, fora do horário, etc..." rows="3"></textarea>
-                        </div>
+                    <div class="form-group">
+                        <label for="nfObservacao">Observações / Divergências</label>
+                        <textarea id="nfObservacao" rows="3" placeholder="Descreva qualquer observação ou divergência encontrada no recebimento..."></textarea>
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Nota Fiscal</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Confirmação -->
+    <!-- Modal de Confirmação de Exclusão -->
     <div id="confirmModal" class="modal">
-        <div class="modal-content modal-small">
+        <div class="modal-content modal-sm">
             <div class="modal-header">
                 <h2>Confirmar Exclusão</h2>
                 <button class="modal-close" id="closeConfirmModal">
@@ -326,22 +344,69 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="confirm-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <p class="confirm-text">Tem certeza que deseja excluir esta nota fiscal?</p>
-                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+                <p>Tem certeza que deseja excluir esta nota fiscal? Esta ação não pode ser desfeita.</p>
             </div>
-            <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancelar</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="cancelDeleteBtn">Cancelar</button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
             </div>
         </div>
     </div>
 
+    <!-- Bibliotecas Externas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+    
+    <!-- Configuração e App -->
     <script src="config.js"></script>
+    <script>
+        // Calendário de Período (Range)
+        let selectedDates = [];
+        let rangePicker;
+
+        function toggleRangeCal() {
+            if (rangePicker) {
+                rangePicker.open();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            rangePicker = flatpickr("#filterData", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d/m/Y",
+                locale: "pt",
+                onChange: function(selectedDatesArr, dateStr, instance) {
+                    selectedDates = selectedDatesArr.map(d => instance.formatDate(d, "Y-m-d"));
+                    updateDateDisplay();
+                    if (window.applyFilters) window.applyFilters();
+                }
+            });
+        });
+
+        function updateDateDisplay() {
+            const display = document.getElementById('selectedDatesDisplay');
+            if (!display) return;
+            
+            if (selectedDates.length === 0) {
+                display.innerHTML = '';
+                return;
+            }
+
+            if (selectedDates.length === 1) {
+                display.innerHTML = `<span class="date-tag">${formatDateDisplay(selectedDates[0])}</span>`;
+            } else {
+                display.innerHTML = `<span class="date-tag">${formatDateDisplay(selectedDates[0])} até ${formatDateDisplay(selectedDates[selectedDates.length-1])}</span>`;
+            }
+        }
+
+        function formatDateDisplay(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
