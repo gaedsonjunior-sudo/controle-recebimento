@@ -33,6 +33,7 @@
     background: white;
     border-bottom: 1px solid var(--gray-100);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding-bottom: 16px;
 }
 
 .page-title {
@@ -44,56 +45,140 @@
 }
 
 /* ========================================
-   FILTROS - DESIGN MODERNO
+   NOVOS CARDS DE RESUMO
    ======================================== */
 
-.filters-section {
-    background: white;
-    border-bottom: 1px solid var(--gray-200);
-    padding: var(--spacing-3) var(--spacing-6);
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 0 4px;
 }
 
-.filters-header {
-    margin-bottom: var(--spacing-2);
+.summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.filters-grid {
-    gap: var(--spacing-3);
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-.filter-group label {
-    font-size: 10px;
-    margin-bottom: var(--spacing-1);
+.summary-card-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
-.filter-group input,
-.filter-group select {
-    padding: var(--spacing-1) var(--spacing-2);
-    height: 32px;
+.summary-card-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
 }
 
-/* label style already defined above */
-
-.filter-group input,
-.filter-group select {
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-2) var(--spacing-3);
-    font-size: var(--text-sm);
-    transition: all 0.3s ease;
-    background: white;
+.text-danger {
+    color: #ef4444 !important;
 }
 
-.filter-group input:focus,
-.filter-group select:focus {
+.text-success {
+    color: #10b981 !important;
+}
+
+/* ========================================
+   FILTROS REMODELADOS - DESIGN MODERNO
+   ======================================== */
+
+.filters-section-modern {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.filter-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-icon {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    pointer-events: none;
+    font-size: 14px;
+}
+
+.filter-item input,
+.filter-item select {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    background-color: #f8fafc;
+    transition: all 0.2s;
+    height: 42px;
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
     outline: none;
     border-color: var(--primary-400);
+    background-color: #ffffff;
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-    background: white;
 }
 
-.filter-group input::placeholder {
-    color: var(--gray-400);
+.btn-clear-filters {
+    padding: 0 24px;
+    background-color: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-clear-filters:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+.selected-dates-modern {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
 }
 
 /* ========================================
@@ -124,7 +209,6 @@
     border-bottom: 2px solid var(--gray-200);
     white-space: nowrap;
     user-select: none;
-    overflow: hidden;
 }
 
 .notas-table tbody tr {
@@ -416,82 +500,28 @@
 }
 
 /* ========================================
-   EMPTY STATE - DESIGN MODERNO
+   RESPONSIVIDADE MOBILE - CARDS E FILTROS
    ======================================== */
 
-.empty-state {
-    text-align: center;
-    padding: var(--spacing-10);
-    color: var(--gray-600);
-}
+@media (max-width: 768px) {
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
 
-.empty-icon {
-    font-size: 48px;
-    color: var(--primary-200);
-    margin-bottom: var(--spacing-4);
-}
+    .summary-card {
+        padding: 16px;
+    }
 
-.empty-state h3 {
-    color: var(--gray-900);
-    font-weight: 600;
-    margin-bottom: var(--spacing-2);
-}
+    .summary-card-value {
+        font-size: 20px;
+    }
 
-.empty-state p {
-    color: var(--gray-500);
-    font-size: var(--text-sm);
-    margin-bottom: var(--spacing-4);
-}
+    .filter-item {
+        min-width: 100%;
+    }
 
-/* ========================================
-   ACTION BUTTONS - DESIGN MODERNO
-   ======================================== */
-
-.btn-action {
-    background: transparent;
-    border: none;
-    padding: var(--spacing-2);
-    cursor: pointer;
-    color: var(--gray-500);
-    border-radius: var(--radius-md);
-    transition: all 0.2s ease;
-    font-size: var(--text-base);
-}
-
-.btn-action:hover {
-    background: var(--gray-100);
-    color: var(--primary-600);
-}
-
-.btn-action.delete:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger-600);
-}
-
-/* ========================================
-   TOAST NOTIFICATIONS
-   ======================================== */
-
-.toast {
-    background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    padding: var(--spacing-4) var(--spacing-5);
-    border-left: 4px solid var(--primary-500);
-}
-
-.toast.success {
-    border-left-color: var(--success-500);
-}
-
-.toast.error {
-    border-left-color: var(--danger-500);
-}
-
-.toast.info {
-    border-left-color: var(--primary-500);
-}
-
-.toast.warning {
-    border-left-color: var(--warning-500);
+    .btn-clear-filters {
+        width: 100%;
+    }
 }

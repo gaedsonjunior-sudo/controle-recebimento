@@ -88,51 +88,50 @@
                     </div>
                 </div>
 
-                <!-- Filtros -->
-                <div class="filters-section" id="filtersWrapper">
-                    <div class="filters-header">
-                        <button id="toggleFiltersBtn" class="btn-filter-toggle">
-                            <i class="fas fa-filter"></i>
-                            <span>Filtros</span>
-                            <i class="fas fa-chevron-down toggle-icon"></i>
-                        </button>
-                        <button id="clearFiltersBtn" class="btn btn-ghost btn-sm">
-                            <i class="fas fa-times"></i>
-                            Limpar
-                        </button>
+                <!-- Cards de Resumo -->
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <span class="summary-card-label">TOTAL DE NOTAS</span>
+                        <span class="summary-card-value" id="cardTotalNotas">0</span>
                     </div>
+                    <div class="summary-card">
+                        <span class="summary-card-label">VALOR TOTAL</span>
+                        <span class="summary-card-value" id="cardValorTotal">R$ 0,00</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-card-label">NÃO ACATADAS</span>
+                        <span class="summary-card-value text-danger" id="cardNaoAcatadas">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-card-label">ACATADAS</span>
+                        <span class="summary-card-value text-success" id="cardAcatadas">0</span>
+                    </div>
+                </div>
 
-                    <div class="filters-content" id="filtersContent">
-                        <div class="filters-grid">
-                            <div class="filter-group">
-                                <label for="filterFornecedor">Fornecedor</label>
-                                <input type="text" id="filterFornecedor" placeholder="Buscar fornecedor...">
-                            </div>
-                            <div class="filter-group">
-                                <label for="filterNF">Número da NF</label>
-                                <input type="text" id="filterNF" placeholder="Buscar nº...">
-                            </div>
-                            <div class="filter-group">
-                                <label for="filterData">Período</label>
-                                <div class="date-picker-container">
-                                    <input type="text" id="filterData" placeholder="Selecionar período" readonly style="cursor:pointer;">
-                                    <button type="button" id="openDatePicker" class="date-picker-btn" title="Abrir calendário">
-                                        <i class="fas fa-calendar-alt"></i>
-                                    </button>
-                                </div>
-                                <div id="selectedDatesDisplay" class="selected-dates"></div>
-                            </div>
-                            <div class="filter-group">
-                                <label for="filterStatus">Status</label>
-                                <select id="filterStatus">
-                                    <option value="">Todos</option>
-                                    <option value="Não Acatada">Não Acatada</option>
-                                    <option value="Acatada">Acatada</option>
-                                    <option value="Devolvida">Devolvida</option>
-                                </select>
-                            </div>
+                <!-- Filtros -->
+                <div class="filters-section-modern" id="filtersWrapper">
+                    <div class="filters-container">
+                        <div class="filter-item search-input">
+                            <i class="fas fa-search filter-icon"></i>
+                            <input type="text" id="filterFornecedor" placeholder="Buscar por Fornecedor ou NF...">
                         </div>
+                        <div class="filter-item date-input">
+                            <i class="fas fa-calendar-alt filter-icon"></i>
+                            <input type="text" id="filterData" placeholder="dd / mm / aaaa" readonly>
+                        </div>
+                        <div class="filter-item select-input">
+                            <select id="filterStatus">
+                                <option value="">Todos os Status</option>
+                                <option value="Não Acatada">Não Acatada</option>
+                                <option value="Acatada">Acatada</option>
+                                <option value="Devolvida">Devolvida</option>
+                            </select>
+                        </div>
+                        <button id="clearFiltersBtn" class="btn-clear-filters">
+                            Limpar Filtros
+                        </button>
                     </div>
+                    <div id="selectedDatesDisplay" class="selected-dates-modern"></div>
                 </div>
             </header>
 

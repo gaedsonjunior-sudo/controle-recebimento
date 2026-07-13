@@ -161,8 +161,6 @@ function setupEventListeners() {
 
     // Filtros
     document.getElementById('filterFornecedor').addEventListener('input', () => { currentPage = 1; applyFilters(); });
-    document.getElementById('filterNF').addEventListener('input', () => { currentPage = 1; applyFilters(); });
-    document.getElementById('openDatePicker').addEventListener('click', toggleRangeCal);
     document.getElementById('filterData').addEventListener('click', toggleRangeCal);
     // Observar mudanças no selectedDates (via calendário)
     const originalUpdateDateDisplay = window.updateDateDisplay;
@@ -352,7 +350,14 @@ function renderNotasFiscais(notas) {
     filteredNotas = notas;
     
     const total = notas.length;
-    totalNotas.textContent = `${total} ${total === 1 ? 'nota' : 'notas'}`;
+    
+    // Atualizar Cards de Resumo
+    updateSummaryCards(notas);
+
+    const totalNotasLabel = document.getElementById('totalNotas');
+    if (totalNotasLabel) {
+        totalNotasLabel.textContent = `${total} ${total === 1 ? 'nota' : 'notas'}`;
+    }
 
     const totalNotasMobile = document.getElementById('totalNotasMobile');
     if (totalNotasMobile) {
@@ -744,18 +749,18 @@ async function deleteNotaFiscal() {
 // Filtros
 function applyFilters() {
     currentPage = 1; // Resetar para a primeira página ao filtrar
-    const fornecedor = document.getElementById('filterFornecedor').value.toLowerCase();
-    const nf = document.getElementById('filterNF').value;
+    const searchTerm = document.getElementById('filterFornecedor').value.toLowerCase();
     const status = document.getElementById('filterStatus').value;
     const datas = selectedDates;
 
     filteredNotas = notasFiscais.filter(nota => {
-        const matchFornecedor = !fornecedor || nota.fornecedor.toLowerCase().includes(fornecedor);
-        const matchNF = !nf || nota.numero_nf.toString().includes(nf.replace(/\./g, ''));
+        const matchSearch = !searchTerm || 
+            nota.fornecedor.toLowerCase().includes(searchTerm) || 
+            nota.numero_nf.toString().includes(searchTerm.replace(/\./g, ''));
         const matchData = datas.length === 0 || datas.includes(nota.data);
         const matchStatus = !status || nota.status === status;
 
-        return matchFornecedor && matchNF && matchData && matchStatus;
+        return matchSearch && matchData && matchStatus;
     });
 
     const sorted = sortNotas([...filteredNotas], currentSortColumn, currentSortDirection);
@@ -764,8 +769,8 @@ function applyFilters() {
 
 function clearFilters() {
     document.getElementById('filterFornecedor').value = '';
-    document.getElementById('filterNF').value = '';
-    document.getElementById('filterData').value = '';
+    const filterData = document.getElementById('filterData');
+    if (filterData) filterData.value = '';
     document.getElementById('filterStatus').value = '';
 
     selectedDates = [];
@@ -773,6 +778,26 @@ function clearFilters() {
 
     const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
     renderNotasFiscais(sorted);
+}
+
+// Atualizar Cards de Resumo
+function updateSummaryCards(notas) {
+    const cardTotalNotas = document.getElementById('cardTotalNotas');
+    const cardValorTotal = document.getElementById('cardValorTotal');
+    const cardNaoAcatadas = document.getElementById('cardNaoAcatadas');
+    const cardAcatadas = document.getElementById('cardAcatadas');
+
+    if (!cardTotalNotas) return;
+
+    const total = notas.length;
+    const valorTotal = notas.reduce((acc, nota) => acc + (parseFloat(nota.valor) || 0), 0);
+    const naoAcatadas = notas.filter(n => n.status === 'Não Acatada').length;
+    const acatadas = notas.filter(n => n.status === 'Acatada').length;
+
+    cardTotalNotas.textContent = total;
+    cardValorTotal.textContent = formatCurrencyDisplay(valorTotal);
+    cardNaoAcatadas.textContent = naoAcatadas;
+    cardAcatadas.textContent = acatadas;
 }
 
 // ========================================
