@@ -88,27 +88,7 @@
                     </div>
                 </div>
 
-                <!-- Cards de Resumo -->
-                <div class="summary-cards">
-                    <div class="summary-card">
-                        <span class="summary-card-label">TOTAL DE NOTAS</span>
-                        <span class="summary-card-value" id="cardTotalNotas">0</span>
-                    </div>
-                    <div class="summary-card">
-                        <span class="summary-card-label">VALOR TOTAL</span>
-                        <span class="summary-card-value" id="cardValorTotal">R$ 0,00</span>
-                    </div>
-                    <div class="summary-card">
-                        <span class="summary-card-label">NÃO ACATADAS</span>
-                        <span class="summary-card-value text-danger" id="cardNaoAcatadas">0</span>
-                    </div>
-                    <div class="summary-card">
-                        <span class="summary-card-label">ACATADAS</span>
-                        <span class="summary-card-value text-success" id="cardAcatadas">0</span>
-                    </div>
-                </div>
-
-                <!-- Filtros (Restaurados conforme original) -->
+                <!-- Filtros -->
                 <div class="filters-section" id="filtersWrapper">
                     <div class="filters-header">
                         <button id="toggleFiltersBtn" class="btn-filter-toggle">
@@ -291,21 +271,21 @@
                             <input type="text" id="nfNumero" required placeholder="000.000.000" inputmode="numeric">
                         </div>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="nfValor">Valor Total (R$) *</label>
-                            <input type="text" id="nfValor" required placeholder="0,00" inputmode="decimal">
-                        </div>
-                        <div class="form-group">
-                            <label for="nfTemperatura">Temperatura (°C)</label>
-                            <input type="text" id="nfTemperatura" placeholder="Ex: 5.5">
-                        </div>
-                    </div>
                 </div>
 
                 <div class="form-section">
-                    <h3 class="form-section-title">Finalização</h3>
+                    <h3 class="form-section-title">Detalhes</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nfValor">Valor *</label>
+                            <input type="text" id="nfValor" required placeholder="R$ 0,00" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="nfTemperatura">Temperatura (°C)</label>
+                            <input type="text" id="nfTemperatura" placeholder="Ex: 5°C">
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="nfHoraSaida">Hora de Saída</label>
@@ -320,23 +300,26 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="nfObservacao">Observações / Divergências</label>
-                        <textarea id="nfObservacao" rows="3" placeholder="Descreva qualquer observação ou divergência encontrada no recebimento..."></textarea>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="nfObservacao">Observação</label>
+                            <textarea id="nfObservacao" placeholder="Ex: Recebeu no dia seguinte, fora do horário, etc..." rows="3"></textarea>
+                        </div>
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-ghost" id="cancelBtn">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Nota Fiscal</button>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal de Confirmação de Exclusão -->
+    <!-- Modal Confirmação -->
     <div id="confirmModal" class="modal">
-        <div class="modal-content modal-sm">
+        <div class="modal-content modal-small">
             <div class="modal-header">
                 <h2>Confirmar Exclusão</h2>
                 <button class="modal-close" id="closeConfirmModal">
@@ -344,69 +327,22 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p>Tem certeza que deseja excluir esta nota fiscal? Esta ação não pode ser desfeita.</p>
+                <div class="confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p class="confirm-text">Tem certeza que deseja excluir esta nota fiscal?</p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-ghost" id="cancelDeleteBtn">Cancelar</button>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancelar</button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
             </div>
         </div>
     </div>
 
-    <!-- Bibliotecas Externas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
-    
-    <!-- Configuração e App -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="config.js"></script>
-    <script>
-        // Calendário de Período (Range)
-        let selectedDates = [];
-        let rangePicker;
-
-        function toggleRangeCal() {
-            if (rangePicker) {
-                rangePicker.open();
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            rangePicker = flatpickr("#filterData", {
-                mode: "range",
-                dateFormat: "Y-m-d",
-                altInput: true,
-                altFormat: "d/m/Y",
-                locale: "pt",
-                onChange: function(selectedDatesArr, dateStr, instance) {
-                    selectedDates = selectedDatesArr.map(d => instance.formatDate(d, "Y-m-d"));
-                    updateDateDisplay();
-                    if (window.applyFilters) window.applyFilters();
-                }
-            });
-        });
-
-        function updateDateDisplay() {
-            const display = document.getElementById('selectedDatesDisplay');
-            if (!display) return;
-            
-            if (selectedDates.length === 0) {
-                display.innerHTML = '';
-                return;
-            }
-
-            if (selectedDates.length === 1) {
-                display.innerHTML = `<span class="date-tag">${formatDateDisplay(selectedDates[0])}</span>`;
-            } else {
-                display.innerHTML = `<span class="date-tag">${formatDateDisplay(selectedDates[0])} até ${formatDateDisplay(selectedDates[selectedDates.length-1])}</span>`;
-            }
-        }
-
-        function formatDateDisplay(dateStr) {
-            const [y, m, d] = dateStr.split('-');
-            return `${d}/${m}/${y}`;
-        }
-    </script>
     <script src="app.js"></script>
 </body>
 </html>

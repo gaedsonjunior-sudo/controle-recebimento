@@ -162,6 +162,7 @@ function setupEventListeners() {
     // Filtros
     document.getElementById('filterFornecedor').addEventListener('input', () => { currentPage = 1; applyFilters(); });
     document.getElementById('filterNF').addEventListener('input', () => { currentPage = 1; applyFilters(); });
+    document.getElementById('openDatePicker').addEventListener('click', toggleRangeCal);
     document.getElementById('filterData').addEventListener('click', toggleRangeCal);
     // Observar mudanças no selectedDates (via calendário)
     const originalUpdateDateDisplay = window.updateDateDisplay;
@@ -351,14 +352,7 @@ function renderNotasFiscais(notas) {
     filteredNotas = notas;
     
     const total = notas.length;
-    
-    // Atualizar Cards de Resumo
-    updateSummaryCards(notas);
-
-    const totalNotasLabel = document.getElementById('totalNotas');
-    if (totalNotasLabel) {
-        totalNotasLabel.textContent = `${total} ${total === 1 ? 'nota' : 'notas'}`;
-    }
+    totalNotas.textContent = `${total} ${total === 1 ? 'nota' : 'notas'}`;
 
     const totalNotasMobile = document.getElementById('totalNotasMobile');
     if (totalNotasMobile) {
@@ -771,8 +765,7 @@ function applyFilters() {
 function clearFilters() {
     document.getElementById('filterFornecedor').value = '';
     document.getElementById('filterNF').value = '';
-    const filterData = document.getElementById('filterData');
-    if (filterData) filterData.value = '';
+    document.getElementById('filterData').value = '';
     document.getElementById('filterStatus').value = '';
 
     selectedDates = [];
@@ -780,26 +773,6 @@ function clearFilters() {
 
     const sorted = sortNotas([...notasFiscais], currentSortColumn, currentSortDirection);
     renderNotasFiscais(sorted);
-}
-
-// Atualizar Cards de Resumo
-function updateSummaryCards(notas) {
-    const cardTotalNotas = document.getElementById('cardTotalNotas');
-    const cardValorTotal = document.getElementById('cardValorTotal');
-    const cardNaoAcatadas = document.getElementById('cardNaoAcatadas');
-    const cardAcatadas = document.getElementById('cardAcatadas');
-
-    if (!cardTotalNotas) return;
-
-    const total = notas.length;
-    const valorTotal = notas.reduce((acc, nota) => acc + (parseFloat(nota.valor) || 0), 0);
-    const naoAcatadas = notas.filter(n => n.status === 'Não Acatada').length;
-    const acatadas = notas.filter(n => n.status === 'Acatada').length;
-
-    cardTotalNotas.textContent = total;
-    cardValorTotal.textContent = formatCurrencyDisplay(valorTotal);
-    cardNaoAcatadas.textContent = naoAcatadas;
-    cardAcatadas.textContent = acatadas;
 }
 
 // ========================================
